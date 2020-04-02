@@ -1755,4 +1755,80 @@ Wire Wire Line
 	13500 6350 13600 6350
 Text Notes 13800 6300 0    50   ~ 0
 Select logic signals voltage.
+$Comp
+L Mechanical:MountingHole_Pad H1
+U 1 1 5F6BD5D3
+P 7250 9850
+F 0 "H1" H 7350 9899 50  0000 L CNN
+F 1 "Hole" H 7350 9808 50  0000 L CNN
+F 2 "MountingHole:MountingHole_3mm_Pad" H 7250 9850 50  0001 C CNN
+F 3 "~" H 7250 9850 50  0001 C CNN
+	1    7250 9850
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR039
+U 1 1 5F6BDC13
+P 7950 10050
+F 0 "#PWR039" H 7950 9800 50  0001 C CNN
+F 1 "GND" H 7955 9877 50  0000 C CNN
+F 2 "" H 7950 10050 50  0001 C CNN
+F 3 "" H 7950 10050 50  0001 C CNN
+	1    7950 10050
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mechanical:MountingHole_Pad H2
+U 1 1 5F6E69A0
+P 7700 9850
+F 0 "H2" H 7800 9899 50  0000 L CNN
+F 1 "Hole" H 7800 9808 50  0000 L CNN
+F 2 "MountingHole:MountingHole_3mm_Pad" H 7700 9850 50  0001 C CNN
+F 3 "~" H 7700 9850 50  0001 C CNN
+	1    7700 9850
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mechanical:MountingHole_Pad H3
+U 1 1 5F6E6B58
+P 8200 9850
+F 0 "H3" H 8300 9899 50  0000 L CNN
+F 1 "Hole" H 8300 9808 50  0000 L CNN
+F 2 "MountingHole:MountingHole_3mm_Pad" H 8200 9850 50  0001 C CNN
+F 3 "~" H 8200 9850 50  0001 C CNN
+	1    8200 9850
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mechanical:MountingHole_Pad H4
+U 1 1 5F6E6DFE
+P 8650 9850
+F 0 "H4" H 8750 9899 50  0000 L CNN
+F 1 "Hole" H 8750 9808 50  0000 L CNN
+F 2 "MountingHole:MountingHole_3mm_Pad" H 8650 9850 50  0001 C CNN
+F 3 "~" H 8650 9850 50  0001 C CNN
+	1    8650 9850
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	7250 9950 7250 10000
+Wire Wire Line
+	7250 10000 7700 10000
+Wire Wire Line
+	7700 10000 7700 9950
+Wire Wire Line
+	7700 10000 7950 10000
+Wire Wire Line
+	7950 10000 7950 10050
+Connection ~ 7700 10000
+Connection ~ 7950 10000
+Wire Wire Line
+	7950 10000 8200 10000
+Wire Wire Line
+	8200 9950 8200 10000
+Connection ~ 8200 10000
+Wire Wire Line
+	8650 10000 8650 9950
+Wire Wire Line
+	8200 10000 8650 10000
 $EndSCHEMATC
