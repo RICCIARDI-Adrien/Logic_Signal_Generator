@@ -1048,9 +1048,9 @@ Text Label 6750 3700 2    50   ~ 0
 FTDI_RD
 Text Label 6750 3800 2    50   ~ 0
 FTDI_WR
-Text Label 12700 2700 2    50   ~ 0
-FTDI_RD
 Text Label 12700 2800 2    50   ~ 0
+FTDI_RD
+Text Label 12700 2700 2    50   ~ 0
 FTDI_WR
 Text Label 6750 3900 2    50   ~ 0
 FTDI_SIWU
