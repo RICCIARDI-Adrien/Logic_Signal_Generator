@@ -1350,34 +1350,6 @@ Wire Wire Line
 	5700 9050 5700 9000
 Connection ~ 5200 9050
 $Comp
-L Device:R R?
-U 1 1 5F097AC5
-P 3850 2800
-AR Path="/5E7ACE5B/5F097AC5" Ref="R?"  Part="1" 
-AR Path="/5F097AC5" Ref="R2"  Part="1" 
-F 0 "R2" V 3553 2800 50  0000 C CNN
-F 1 "27" V 3644 2800 50  0000 C CNN
-F 2 "Resistor_SMD:R_1206_3216Metric_Pad1.42x1.75mm_HandSolder" V 3780 2800 50  0001 C CNN
-F 3 "~" H 3850 2800 50  0001 C CNN
-F 4 "1%" V 3735 2800 50  0000 C CNN "Value2"
-	1    3850 2800
-	0    1    1    0   
-$EndComp
-$Comp
-L Device:R R?
-U 1 1 5F098F51
-P 3850 2900
-AR Path="/5E7ACE5B/5F098F51" Ref="R?"  Part="1" 
-AR Path="/5F098F51" Ref="R3"  Part="1" 
-F 0 "R3" V 3965 2900 50  0000 C CNN
-F 1 "27" V 4056 2900 50  0000 C CNN
-F 2 "Resistor_SMD:R_1206_3216Metric_Pad1.42x1.75mm_HandSolder" V 3780 2900 50  0001 C CNN
-F 3 "~" H 3850 2900 50  0001 C CNN
-F 4 "1%" V 4147 2900 50  0000 C CNN "Value2"
-	1    3850 2900
-	0    1    1    0   
-$EndComp
-$Comp
 L power:+3.3VA #PWR028
 U 1 1 5F0B0883
 P 4750 3100
@@ -1831,4 +1803,40 @@ Wire Wire Line
 	8650 10000 8650 9950
 Wire Wire Line
 	8200 10000 8650 10000
+Text Label 2500 2450 0    50   ~ 0
+USB_1_D+
+Text Label 2500 2550 0    50   ~ 0
+USB_1_D-
+Text Label 4200 2800 0    50   ~ 0
+USB_2_D+
+Text Label 4200 2900 0    50   ~ 0
+USB_2_D-
+$Comp
+L Device:R R?
+U 1 1 5F098F51
+P 3850 2900
+AR Path="/5E7ACE5B/5F098F51" Ref="R?"  Part="1" 
+AR Path="/5F098F51" Ref="R3"  Part="1" 
+F 0 "R3" V 3965 2900 50  0000 C CNN
+F 1 "27" V 4056 2900 50  0000 C CNN
+F 2 "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder" V 3780 2900 50  0001 C CNN
+F 3 "~" H 3850 2900 50  0001 C CNN
+F 4 "1%" V 4147 2900 50  0000 C CNN "Value2"
+	1    3850 2900
+	0    1    1    0   
+$EndComp
+$Comp
+L Device:R R?
+U 1 1 5F097AC5
+P 3850 2800
+AR Path="/5E7ACE5B/5F097AC5" Ref="R?"  Part="1" 
+AR Path="/5F097AC5" Ref="R2"  Part="1" 
+F 0 "R2" V 3553 2800 50  0000 C CNN
+F 1 "27" V 3644 2800 50  0000 C CNN
+F 2 "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder" V 3780 2800 50  0001 C CNN
+F 3 "~" H 3850 2800 50  0001 C CNN
+F 4 "1%" V 3735 2800 50  0000 C CNN "Value2"
+	1    3850 2800
+	0    1    1    0   
+$EndComp
 $EndSCHEMATC
