@@ -16,7 +16,7 @@
 // CONFIG2H register
 #pragma config WDTEN = OFF // Disable the watchdog timer
 // CONFIG3H register
-#pragma config MCLRE = ON, SDOMX = RB3, PBADEN = OFF, CCP2MX = RC1 // Enable /MCLR, keep the SPI SDO pin on port B, configure the port A pins as digital I/Os, move the CCP2 pin to port C
+#pragma config MCLRE = ON, SDOMX = RB3, PBADEN = OFF, CCP2MX = RC1 // Enable /MCLR, keep the SPI SDO pin on port B, configure the port B pins as digital I/Os, move the CCP2 pin to port C
 // CONFIG4L register
 #pragma config DEBUG = OFF, XINST = OFF, ICPRT = OFF, LVP = ON, STVREN = ON // Disable the debugger, disable the extended instruction set, disable the in-circuit debug/programming port, enable the low-voltage programming, stack overflow or underflow will reset the MCU
 // CONFIG5L register
@@ -37,5 +37,16 @@
 //-------------------------------------------------------------------------------------------------
 void main(void)
 {
-	
+	// Configure the system clock at 48MHz
+	OSCCON = 0x70; // Select a 16MHz frequency output for the internal oscillator, select the primary clock configured by the fuses (which is the internal oscillator)
+
+	// TEST
+	ANSELBbits.ANSB2 = 0;
+	LATBbits.LATB2 = 0;
+	TRISBbits.TRISB2 = 0;
+	while (1)
+	{
+		LATBbits.LATB2 = !LATBbits.LATB2;
+		__delay_ms(1000);
+	}
 }
