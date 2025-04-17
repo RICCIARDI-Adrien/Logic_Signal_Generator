@@ -7,7 +7,8 @@ FIRMWARE_VERSION=1.0
 
 BINARY_NAME = Logic_Signal_Generator.hex
 SOURCES = \
-	$(PATH_SOURCES)/Main.c
+	$(PATH_SOURCES)/Main.c \
+	$(PATH_SOURCES)/UART.c
 
 CC = xc8-cc
 # The -Wa,-a argument tells the assembler to generate a listing file

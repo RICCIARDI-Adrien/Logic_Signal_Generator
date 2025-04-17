@@ -2,6 +2,7 @@
  * Logic signal generator entry point and main loop.
  * @author Adrien RICCIARDI
  */
+#include <UART.h>
 #include <xc.h>
 
 //-------------------------------------------------------------------------------------------------
@@ -39,6 +40,10 @@ void main(void)
 {
 	// Configure the system clock at 48MHz
 	OSCCON = 0x70; // Select a 16MHz frequency output for the internal oscillator, select the primary clock configured by the fuses (which is the internal oscillator)
+	__delay_ms(10); // Add a little delay to make sure that the PLL is locked (2ms should be enough, but take some margin)
+
+	// Initialize the modules
+	UARTInitialize();
 
 	// TEST
 	ANSELBbits.ANSB2 = 0;
@@ -46,6 +51,13 @@ void main(void)
 	TRISBbits.TRISB2 = 0;
 	while (1)
 	{
+		UARTWriteByte('C');
+		UARTWriteByte('I');
+		UARTWriteByte('A');
+		UARTWriteByte('O');
+		UARTWriteByte('\r');
+		UARTWriteByte('\n');
+
 		LATBbits.LATB2 = !LATBbits.LATB2;
 		__delay_ms(1000);
 	}
