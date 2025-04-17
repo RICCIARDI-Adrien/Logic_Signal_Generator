@@ -2,6 +2,7 @@
  * Logic signal generator entry point and main loop.
  * @author Adrien RICCIARDI
  */
+#include <Log.h>
 #include <UART.h>
 #include <xc.h>
 
@@ -44,6 +45,8 @@ void main(void)
 
 	// Initialize the modules
 	UARTInitialize();
+
+	LOG(1, "Initialization complete.");
 
 	// TEST
 	ANSELBbits.ANSB2 = 0;
