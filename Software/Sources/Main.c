@@ -38,6 +38,20 @@
 #pragma config EBTRB = OFF // Disable boot block read protection
 
 //-------------------------------------------------------------------------------------------------
+// Private functions
+//-------------------------------------------------------------------------------------------------
+/** High-priority interrupts handler entry point. */
+void __interrupt(high_priority) MainInterruptHandlerHighPriority(void)
+{
+	if (USB_CORE_IS_INTERRUPT_FIRED()) USBCoreInterruptHandler();
+}
+
+/** Low-priority interrupts handler entry point. */
+void __interrupt(low_priority) MainInterruptHandlerLowPriority(void)
+{
+}
+
+//-------------------------------------------------------------------------------------------------
 // Entry point
 //-------------------------------------------------------------------------------------------------
 void main(void)
@@ -48,6 +62,10 @@ void main(void)
 
 	// Initialize the modules
 	UARTInitialize();
+
+	// Configure the interrupts
+	RCONbits.IPEN = 1; // Enable priority levels on interrupts
+	INTCON |= 0xC0; // Enable high and low priority interrupts
 
 	LOG(1, "Initialization complete.");
 

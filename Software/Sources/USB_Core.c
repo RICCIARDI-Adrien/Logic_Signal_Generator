@@ -5,6 +5,9 @@
 #include <USB_Core.h>
 #include <xc.h>
 
+// TEST
+#include <Log.h>
+
 //-------------------------------------------------------------------------------------------------
 // Public functions
 //-------------------------------------------------------------------------------------------------
@@ -16,6 +19,21 @@ void USBCoreInitialize(void)
 	// Enable the packet transfer
 	UCON = 0;
 
+	// Configure the interrupts
+	PIE3bits.USBIE = 1; // Enable the USB peripheral global interrupt
+	UIE = 0x1; // TEST enable only reset
+	IPR3bits.USBIP = 1; // Set the USB interrupt as high priority
+
 	// Enable the USB module and attach the device to the USB bus
 	UCONbits.USBEN = 1;
+}
+
+void USBCoreInterruptHandler(void)
+{
+	// TEST
+	LOG(1, "RESET");
+	UIRbits.URSTIF = 0;
+
+	// Clear the interrupt flag
+	PIR3bits.USBIF = 0;
 }
