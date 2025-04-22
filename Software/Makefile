@@ -9,7 +9,8 @@ BINARY_NAME = Logic_Signal_Generator.hex
 SOURCES = \
 	$(PATH_SOURCES)/Log.c \
 	$(PATH_SOURCES)/Main.c \
-	$(PATH_SOURCES)/UART.c
+	$(PATH_SOURCES)/UART.c \
+	$(PATH_SOURCES)/USB_Core.c
 
 CC = xc8-cc
 # The -Wa,-a argument tells the assembler to generate a listing file

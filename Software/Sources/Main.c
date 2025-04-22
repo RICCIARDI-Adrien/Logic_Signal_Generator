@@ -6,6 +6,9 @@
 #include <UART.h>
 #include <xc.h>
 
+// TEST
+#include <USB_Core.h>
+
 //-------------------------------------------------------------------------------------------------
 // Microcontroller configuration
 //-------------------------------------------------------------------------------------------------
@@ -35,7 +38,7 @@
 #pragma config EBTRB = OFF // Disable boot block read protection
 
 //-------------------------------------------------------------------------------------------------
-// Public functions
+// Entry point
 //-------------------------------------------------------------------------------------------------
 void main(void)
 {
@@ -47,6 +50,9 @@ void main(void)
 	UARTInitialize();
 
 	LOG(1, "Initialization complete.");
+
+	// TEST
+	USBCoreInitialize();
 
 	// TEST
 	ANSELBbits.ANSB2 = 0;
