@@ -13,14 +13,69 @@
 /** Tell whether the USB peripheral interrupt needs to be serviced. */
 #define USB_CORE_IS_INTERRUPT_FIRED() PIR3bits.USBIF // No need to check whether the interrupt is enabled in the PIE register, because the USB interrupt is always enabled
 
+/** The USB specification release number in BCD format to use in the relevant descriptors. */
+#define USB_CORE_BCD_USB_SPECIFICATION_RELEASE_NUMBER { 0x00, 0x02 }
+
 /** The size in byte of any endpoint buffer (this conforms to the USB 2.0 specifications for full-speed devices). */
 #define USB_CORE_ENDPOINT_PACKETS_SIZE 64
 
 //-------------------------------------------------------------------------------------------------
+// Types
+//-------------------------------------------------------------------------------------------------
+/** The type of an USB descriptor. Ignore the values related to high-speed. */
+typedef enum : unsigned char
+{
+	USB_CORE_DESCRIPTOR_TYPE_DEVICE = 1,
+	USB_CORE_DESCRIPTOR_TYPE_CONFIGURATION = 2,
+	USB_CORE_DESCRIPTOR_TYPE_STRING = 3,
+	USB_CORE_DESCRIPTOR_TYPE_INTERFACE = 4,
+	USB_CORE_DESCRIPTOR_TYPE_ENDPOINT = 5
+} TUSBCoreDescriptorType;
+
+/** The supported device class codes. */
+typedef enum : unsigned char
+{
+	USB_CORE_DEVICE_CLASS_COMMUNICATIONS = 2 //!< CDC.
+} TUSBCoreDeviceClass;
+
+/** The supported device sub class codes. */
+typedef enum : unsigned char
+{
+	USB_CORE_DEVICE_SUB_CLASS_NONE = 0
+} TUSBCoreDeviceSubClass;
+
+/** The supported device protocol codes. */
+typedef enum : unsigned char
+{
+	USB_CORE_DEVICE_PROTOCOL_NONE = 0 //!< No device class-specific protocol is used.
+} TUSBCoreDeviceProtocol;
+
+/** An USB device descriptor, using the USB naming for simplicity. */
+typedef struct
+{
+	unsigned char bLength;
+	TUSBCoreDescriptorType bDescriptorType;
+	unsigned char bcdUSB[2];
+	TUSBCoreDeviceClass bDeviceClass;
+	unsigned char bDeviceSubClass;
+	unsigned char bDeviceProtocol;
+	unsigned char bMaxPacketSize0;
+	unsigned short idVendor;
+	unsigned short idProduct;
+	unsigned short bcdDevice;
+	unsigned char iManufacturer;
+	unsigned char iProduct;
+	unsigned char iSerialNumber;
+	unsigned char bNumConfigurations;
+} __attribute__((packed)) TUSBCoreDescriptorDevice;
+
+//-------------------------------------------------------------------------------------------------
 // Functions
 //-------------------------------------------------------------------------------------------------
-/** Configure the USB peripheral for full-speed operations and attach the device to the bus. */
-void USBCoreInitialize(void);
+/** Configure the USB peripheral for full-speed operations and attach the device to the bus.
+ * TODO
+ */
+void USBCoreInitialize(const void *Pointer_Descriptors);
 
 /** Configure the specified endpoint out buffer for an upcoming reception of data from the host.
  * @param Endpoint_ID The endpoint number (any endpoint other than 0 must have been enabled in the device descriptors).

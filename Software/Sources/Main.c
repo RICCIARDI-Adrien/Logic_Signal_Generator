@@ -4,10 +4,8 @@
  */
 #include <Log.h>
 #include <UART.h>
-#include <xc.h>
-
-// TEST
 #include <USB_Core.h>
+#include <xc.h>
 
 //-------------------------------------------------------------------------------------------------
 // Microcontroller configuration
@@ -36,6 +34,40 @@
 #pragma config EBTR3 = OFF, EBTR2 = OFF, EBTR1 = OFF, EBTR0 = OFF // Disable blocks read protection
 // CONFIG7H register
 #pragma config EBTRB = OFF // Disable boot block read protection
+
+//-------------------------------------------------------------------------------------------------
+// Private types
+//-------------------------------------------------------------------------------------------------
+/** Gather all needed descriptors into a single memory area. */
+typedef struct
+{
+	TUSBCoreDescriptorDevice Device_Descriptor;
+} __attribute__((packed)) TMainUSBDescriptors;
+
+//-------------------------------------------------------------------------------------------------
+// Private variables
+//-------------------------------------------------------------------------------------------------
+/** The application various USB descriptors. */
+static const TMainUSBDescriptors Main_USB_Descriptors = // Store this into the program memory to save some RAM
+{
+	.Device_Descriptor =
+	{
+		.bLength = sizeof(TUSBCoreDescriptorDevice),
+		.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_DEVICE,
+		.bcdUSB = USB_CORE_BCD_USB_SPECIFICATION_RELEASE_NUMBER,
+		.bDeviceClass = USB_CORE_DEVICE_CLASS_COMMUNICATIONS,
+		.bDeviceSubClass = USB_CORE_DEVICE_SUB_CLASS_NONE, // The host will check each interface
+		.bDeviceProtocol = USB_CORE_DEVICE_PROTOCOL_NONE,
+		.bMaxPacketSize0 = USB_CORE_ENDPOINT_PACKETS_SIZE,
+		.idVendor = 0x1240, // Use the Microchip VID for now
+		.idProduct = 0xFADA, // Use a random product ID
+		.bcdDevice = 0x0001, // Version 0.1 for now
+		.iManufacturer = 0,
+		.iProduct = 1,
+		.iSerialNumber = 2,
+		.bNumConfigurations = 1
+	}
+};
 
 //-------------------------------------------------------------------------------------------------
 // Private functions
@@ -70,7 +102,7 @@ void main(void)
 	LOG(1, "Initialization complete.");
 
 	// TEST
-	USBCoreInitialize();
+	USBCoreInitialize(&Main_USB_Descriptors);
 
 	// TEST
 	ANSELBbits.ANSB2 = 0;
