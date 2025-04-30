@@ -64,6 +64,9 @@ void USBCoreInitialize(void)
 
 	// Enable the USB module and attach the device to the USB bus
 	UCONbits.USBEN = 1;
+
+	// Use the USB bus precise timings to keep the microcontroller clock synchronized
+	ACTCON = 0xD0; // Enable the active clock tuning module, allow the module to automatically update the OSCTUNE register, use the USB host clock as reference
 }
 
 void USBCorePrepareForOutTransfer(unsigned char Endpoint_ID)
