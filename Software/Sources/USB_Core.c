@@ -30,7 +30,29 @@
 /** An SIE endpoint descriptor, applicable to a single-direction hardware endpoint. */
 typedef struct
 {
-	unsigned char Status;
+	union
+	{
+		/** Map the status register content when the microcontroller has initialized it and gives to the SIE. */
+		struct TUSBCoreBufferDescriptorStatusToPeripheral
+		{
+			unsigned char Bytes_Count_High : 2;
+			unsigned char Is_Buffer_Stalled : 1;
+			unsigned char Is_Data_Toggle_Synchronized_Enabled : 1;
+			unsigned char Reserved : 2;
+			unsigned char Data_Toggle_Synchronization : 1;
+			unsigned char Is_Owned_By_Peripheral : 1;
+		} Status_To_Peripheral;
+		/** Map the status register content when the SIE has written to it. */
+		struct TUSBCoreBufferDescriptorStatusFromPeripheral
+		{
+			unsigned char Bytes_Count_High : 2;
+			unsigned char PID : 4;
+			unsigned char Reserved : 1;
+			unsigned char Is_Owned_By_Peripheral : 1;
+		} Status_From_Peripheral;
+		/** Allow to access directly to the register content. */
+		unsigned char Status;
+	};
 	unsigned char Bytes_Count;
 	volatile unsigned char *Pointer_Address; // The compiler manual tells that this type of pointer is always 2-byte long
 } __attribute__((packed)) TUSBCoreBufferDescriptor;
@@ -38,8 +60,8 @@ typedef struct
 /** Consider than the in and out directions are enabled for all endpoints, so always map them both into the SIE endpoint descriptors memory. */
 typedef struct
 {
-	TUSBCoreBufferDescriptor Out_Descriptor; //!< A transfer from the host to the device.
-	TUSBCoreBufferDescriptor In_Descriptor; //!< A transfer from the device to the host.
+	volatile TUSBCoreBufferDescriptor Out_Descriptor; //!< A transfer from the host to the device.
+	volatile TUSBCoreBufferDescriptor In_Descriptor; //!< A transfer from the device to the host.
 } __attribute__((packed)) TUSBCoreEndpointBufferDescriptor;
 
 /** All supported device request IDs. */
@@ -122,7 +144,7 @@ void USBCorePrepareForOutTransfer(unsigned char Endpoint_ID)
 	// Allow the maximum amount of data to be received
 	Pointer_Endpoint_Descriptor->Out_Descriptor.Bytes_Count = USB_CORE_ENDPOINT_PACKETS_SIZE;
 	Pointer_Endpoint_Descriptor->Out_Descriptor.Status = 0; // Use the default settings
-	Pointer_Endpoint_Descriptor->Out_Descriptor.Status |= 0x80; // Give the endpoint OUT buffer ownership to the USB peripheral
+	Pointer_Endpoint_Descriptor->Out_Descriptor.Status_To_Peripheral.Is_Owned_By_Peripheral = 1; // Give the endpoint OUT buffer ownership to the USB peripheral
 }
 
 void USBCorePrepareForInTransfer(unsigned char Endpoint_ID, void *Pointer_Data, unsigned char Data_Size)
@@ -134,15 +156,16 @@ void USBCorePrepareForInTransfer(unsigned char Endpoint_ID, void *Pointer_Data, 
 	// Cache the buffer descriptor access
 	Pointer_Endpoint_Descriptor = &USB_Core_Endpoint_Descriptors[Endpoint_ID];
 
-	while (Pointer_Endpoint_Descriptor->In_Descriptor.Status & 0x80);
+	// Wait for any transfer concerning the endpoint to finish
+	while (Pointer_Endpoint_Descriptor->In_Descriptor.Status_From_Peripheral.Is_Owned_By_Peripheral);
 
 	// Copy the data to the USB RAM
 	memcpy((void *) Pointer_Endpoint_Descriptor->In_Descriptor.Pointer_Address, Pointer_Data, Data_Size);
 	Pointer_Endpoint_Descriptor->In_Descriptor.Bytes_Count = Data_Size;
 
 	// Configure the transfer settings
-	Pointer_Endpoint_Descriptor->In_Descriptor.Status = 0 + (1<<3) | (1<<6); // Use data 0 packets without synchronization
-	Pointer_Endpoint_Descriptor->In_Descriptor.Status |= 0x80; // Give the endpoint IN buffer ownership to the USB peripheral
+	Pointer_Endpoint_Descriptor->In_Descriptor.Status = 0; // Use data 0 packets without synchronization
+	Pointer_Endpoint_Descriptor->In_Descriptor.Status_To_Peripheral.Is_Owned_By_Peripheral = 1; // Give the endpoint IN buffer ownership to the USB peripheral
 }
 
 void USBCoreInterruptHandler(void)
@@ -207,7 +230,7 @@ void USBCoreInterruptHandler(void)
 			Pointer_Device_Request = (volatile TUSBCoreDeviceRequest *) Pointer_Endpoint_Buffer;
 			if ((Pointer_Device_Request->bmRequestType & USB_CORE_DEVICE_REQUEST_TYPE_MASK_TYPE) == USB_CORE_DEVICE_REQUEST_TYPE_VALUE_TYPE_STANDARD)
 			{
-				LOG(USB_CORE_IS_LOGGING_ENABLED, "Received a standard device request packet.");
+				LOG(USB_CORE_IS_LOGGING_ENABLED, "Decoded as a standard device request.");
 
 				switch (Pointer_Device_Request->bRequest)
 				{
