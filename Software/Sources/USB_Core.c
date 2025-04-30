@@ -24,6 +24,9 @@
 #define USB_CORE_DEVICE_REQUEST_TYPE_VALUE_RECIPIENT_ENDPOINT 2
 #define USB_CORE_DEVICE_REQUEST_TYPE_VALUE_RECIPIENT_OTHER 3
 
+/** All supported USB packet ID types (see USB 2.0 specifications table 8.1). */
+#define USB_CORE_PACKET_ID_TYPE_SETUP 0x0D
+
 //-------------------------------------------------------------------------------------------------
 // Private types
 //-------------------------------------------------------------------------------------------------
@@ -224,13 +227,13 @@ void USBCoreInterruptHandler(void)
 		}
 		#endif
 
-		// Manage the standard device requests (TODO organize better to support other requests)
-		if (!Is_In_Transfer && (Endpoint_ID == 0)) // Such requests are only addressed to the endpoint 0
+		// Manage the standard setup requests (TODO organize better to support other requests)
+		if (!Is_In_Transfer && (Pointer_Endpoint_Descriptor->Out_Descriptor.Status_From_Peripheral.PID == USB_CORE_PACKET_ID_TYPE_SETUP)) // Such requests are only addressed to the endpoint 0
 		{
 			Pointer_Device_Request = (volatile TUSBCoreDeviceRequest *) Pointer_Endpoint_Buffer;
 			if ((Pointer_Device_Request->bmRequestType & USB_CORE_DEVICE_REQUEST_TYPE_MASK_TYPE) == USB_CORE_DEVICE_REQUEST_TYPE_VALUE_TYPE_STANDARD)
 			{
-				LOG(USB_CORE_IS_LOGGING_ENABLED, "Decoded as a standard device request.");
+				LOG(USB_CORE_IS_LOGGING_ENABLED, "Decoded as a standard setup device request.");
 
 				switch (Pointer_Device_Request->bRequest)
 				{
