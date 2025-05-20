@@ -62,9 +62,9 @@ static const TMainUSBDescriptors Main_USB_Descriptors = // Store this into the p
 		.idVendor = 0x1240, // Use the Microchip VID for now
 		.idProduct = 0xFADA, // Use a random product ID
 		.bcdDevice = 0x0001, // Version 0.1 for now
-		.iManufacturer = 0,
-		.iProduct = 1,
-		.iSerialNumber = 2,
+		.iManufacturer = 1,
+		.iProduct = 2,
+		.iSerialNumber = 3,
 		.bNumConfigurations = 1
 	}
 };
