@@ -99,7 +99,7 @@ void main(void)
 	RCONbits.IPEN = 1; // Enable priority levels on interrupts
 	INTCON |= 0xC0; // Enable high and low priority interrupts
 
-	LOG(1, "Initialization complete.");
+	LOG(1, "\033[33mInitialization complete.\033[0m");
 
 	// TEST
 	USBCoreInitialize(&Main_USB_Descriptors);
