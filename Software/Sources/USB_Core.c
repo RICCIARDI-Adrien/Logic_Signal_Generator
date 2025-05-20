@@ -207,54 +207,58 @@ void USBCoreInterruptHandler(void)
 		if (Is_In_Transfer) Pointer_Endpoint_Buffer = Pointer_Endpoint_Descriptor->In_Descriptor.Pointer_Address;
 		else Pointer_Endpoint_Buffer = Pointer_Endpoint_Descriptor->Out_Descriptor.Pointer_Address;
 
-		// Display the received packet data if this is an out or a setup transfer
-		#if USB_CORE_IS_LOGGING_ENABLED
-		if (!Is_In_Transfer)
+		// IN transfer
+		if (Is_In_Transfer)
 		{
-			unsigned char i, Bytes_Count;
+			#if USB_CORE_IS_LOGGING_ENABLED
+				unsigned char Bytes_Count;
 
-			Bytes_Count = Pointer_Endpoint_Descriptor->Out_Descriptor.Bytes_Count;
-			LOG(USB_CORE_IS_LOGGING_ENABLED, "Received a %d-byte packet on endpoint %d : ", Bytes_Count, Endpoint_ID);
-			for (i = 0; i < Bytes_Count; i++) printf("0x%02X ", Pointer_Endpoint_Buffer[i]);
-			puts("\r");
+				Bytes_Count = Pointer_Endpoint_Descriptor->In_Descriptor.Bytes_Count;
+				LOG(USB_CORE_IS_LOGGING_ENABLED, "Sent a %d-byte packet from endpoint %d.", Bytes_Count, Endpoint_ID);
+			#endif
 		}
+		// OUT or SETUP transfer
 		else
 		{
-			unsigned char Bytes_Count;
+			// Display the received packet data
+			#if USB_CORE_IS_LOGGING_ENABLED
+				unsigned char i, Bytes_Count;
 
-			Bytes_Count = Pointer_Endpoint_Descriptor->In_Descriptor.Bytes_Count;
-			LOG(USB_CORE_IS_LOGGING_ENABLED, "Sent a %d-byte packet from endpoint %d.", Bytes_Count, Endpoint_ID);
-		}
-		#endif
+				Bytes_Count = Pointer_Endpoint_Descriptor->Out_Descriptor.Bytes_Count;
+				LOG(USB_CORE_IS_LOGGING_ENABLED, "Received a %d-byte packet on endpoint %d : ", Bytes_Count, Endpoint_ID);
+				for (i = 0; i < Bytes_Count; i++) printf("0x%02X ", Pointer_Endpoint_Buffer[i]);
+				puts("\r");
+			#endif
 
-		// Manage the standard setup requests (TODO organize better to support other requests)
-		if (!Is_In_Transfer && (Pointer_Endpoint_Descriptor->Out_Descriptor.Status_From_Peripheral.PID == USB_CORE_PACKET_ID_TYPE_SETUP)) // Such requests are only addressed to the endpoint 0
-		{
-			Pointer_Device_Request = (volatile TUSBCoreDeviceRequest *) Pointer_Endpoint_Buffer;
-			if ((Pointer_Device_Request->bmRequestType & USB_CORE_DEVICE_REQUEST_TYPE_MASK_TYPE) == USB_CORE_DEVICE_REQUEST_TYPE_VALUE_TYPE_STANDARD)
+			// Manage the standard setup requests (TODO organize better to support other requests)
+			if (Pointer_Endpoint_Descriptor->Out_Descriptor.Status_From_Peripheral.PID == USB_CORE_PACKET_ID_TYPE_SETUP) // Such requests are only addressed to the endpoint 0
 			{
-				LOG(USB_CORE_IS_LOGGING_ENABLED, "Decoded as a standard setup device request.");
-
-				switch (Pointer_Device_Request->bRequest)
+				Pointer_Device_Request = (volatile TUSBCoreDeviceRequest *) Pointer_Endpoint_Buffer;
+				if ((Pointer_Device_Request->bmRequestType & USB_CORE_DEVICE_REQUEST_TYPE_MASK_TYPE) == USB_CORE_DEVICE_REQUEST_TYPE_VALUE_TYPE_STANDARD)
 				{
-					case USB_CORE_DEVICE_REQUEST_ID_GET_DESCRIPTOR:
+					LOG(USB_CORE_IS_LOGGING_ENABLED, "Decoded as a standard setup device request.");
+
+					switch (Pointer_Device_Request->bRequest)
 					{
-						unsigned char Descriptor_Type, Descriptor_Index;
+						case USB_CORE_DEVICE_REQUEST_ID_GET_DESCRIPTOR:
+						{
+							unsigned char Descriptor_Type, Descriptor_Index;
 
-						// Retrieve the request parameters
-						Descriptor_Type = Pointer_Device_Request->wValue >> 8;
-						Descriptor_Index = (unsigned char) Pointer_Device_Request->wValue;
-						LOG(USB_CORE_IS_LOGGING_ENABLED, "Host is asking for %d bytes of the descriptor of type %d and index %d.", Pointer_Device_Request->wLength, Descriptor_Type, Descriptor_Index);
+							// Retrieve the request parameters
+							Descriptor_Type = Pointer_Device_Request->wValue >> 8;
+							Descriptor_Index = (unsigned char) Pointer_Device_Request->wValue;
+							LOG(USB_CORE_IS_LOGGING_ENABLED, "Host is asking for %d bytes of the descriptor of type %d and index %d.", Pointer_Device_Request->wLength, Descriptor_Type, Descriptor_Index);
 
-						USBCorePrepareForInTransfer(0, (void *) Pointer_USB_Core_Descriptor_Device, sizeof(TUSBCoreDescriptorDevice));
-						USBCorePrepareForOutTransfer(0); // Re-enable packets reception
-						break;
+							USBCorePrepareForInTransfer(0, (void *) Pointer_USB_Core_Descriptor_Device, sizeof(TUSBCoreDescriptorDevice));
+							USBCorePrepareForOutTransfer(0); // Re-enable packets reception
+							break;
+						}
+
 					}
 
+					// When a setup transfer is received, the SIE disables packets processing, so re-enable it now
+					UCONbits.PKTDIS = 0;
 				}
-
-				// When a setup transfer is received, the SIE disables packets processing, so re-enable it now
-				UCONbits.PKTDIS = 0;
 			}
 		}
 
