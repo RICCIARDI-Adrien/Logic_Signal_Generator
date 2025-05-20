@@ -178,6 +178,7 @@ void USBCorePrepareForInTransfer(unsigned char Endpoint_ID, void *Pointer_Data, 
 
 void USBCoreInterruptHandler(void)
 {
+	static unsigned char Device_Address = 0; // Keep the assigned address to set it in a later interrupt
 	unsigned char Endpoint_ID, Is_In_Transfer;
 	volatile TUSBCoreEndpointBufferDescriptor *Pointer_Endpoint_Descriptor;
 	volatile unsigned char *Pointer_Endpoint_Buffer;
@@ -191,12 +192,11 @@ void USBCoreInterruptHandler(void)
 	}
 	#endif
 
-	// Wait for the address and discard every other event when the device has been reset
+	// Discard every other event when the device has been reset
 	if (UIRbits.URSTIF)
 	{
 		LOG(USB_CORE_IS_LOGGING_ENABLED, "Detected a Reset condition, starting enumeration process.");
 		UIRbits.URSTIF = 0; // Clear the interrupt flag
-		//UCONbits.PKTDIS = 0;
 		return;
 	}
 
@@ -221,6 +221,13 @@ void USBCoreInterruptHandler(void)
 				Bytes_Count = Pointer_Endpoint_Descriptor->In_Descriptor.Bytes_Count;
 				LOG(USB_CORE_IS_LOGGING_ENABLED, "Sent a %d-byte packet from endpoint %d.", Bytes_Count, Endpoint_ID);
 			#endif
+
+			// Assign the device address only when the ACK of the SET ADDRESS command has been transmitted on the default address 0
+			if (Device_Address != 0)
+			{
+				UADDR = Device_Address;
+				Device_Address = 0;
+			}
 		}
 		// OUT or SETUP transfer
 		else
@@ -246,14 +253,14 @@ void USBCoreInterruptHandler(void)
 					switch (Pointer_Device_Request->bRequest)
 					{
 						case USB_CORE_DEVICE_REQUEST_ID_SET_ADDRESS:
-						{
-							unsigned char Address;
+							// Keep the address to set it after this SETUP request has been fully serviced on the current default address 0
+							Device_Address = (unsigned char) Pointer_Device_Request->wValue;
+							LOG(USB_CORE_IS_LOGGING_ENABLED, "Host is setting the device address to 0x%02X.", Device_Address);
 
-							Address = (unsigned char) Pointer_Device_Request->wValue;
-							UADDR = Address;
-							LOG(USB_CORE_IS_LOGGING_ENABLED, "Host is setting the device address to 0x%02X.", Address);
+							// Send back an empty packet to acknowledge the address setting (still using the default address 0)
+							USBCorePrepareForInTransfer(0, NULL, 0, 1);
+							USBCorePrepareForOutTransfer(0, 0); // Re-enable packets reception
 							break;
-						}
 
 						case USB_CORE_DEVICE_REQUEST_ID_GET_DESCRIPTOR:
 						{
