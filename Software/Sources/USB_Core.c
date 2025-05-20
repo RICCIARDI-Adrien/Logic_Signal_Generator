@@ -70,6 +70,7 @@ typedef struct
 /** All supported device request IDs. */
 typedef enum : unsigned char
 {
+	USB_CORE_DEVICE_REQUEST_ID_SET_ADDRESS = 5,
 	USB_CORE_DEVICE_REQUEST_ID_GET_DESCRIPTOR = 6
 } TUSBCoreDeviceRequestID;
 
@@ -122,7 +123,7 @@ void USBCoreInitialize(const void *Pointer_Descriptors)
 	}
 
 	// Make sure that the control endpoint can receive a packet
-	USBCorePrepareForOutTransfer(0);
+	USBCorePrepareForOutTransfer(0, 0);
 
 	// Always enable the endpoint 0, used as the control endpoint
 	UEP0 = 0x16; // Enable endpoint handshake, allow control transfers, enabled endpoint input and output
@@ -139,18 +140,20 @@ void USBCoreInitialize(const void *Pointer_Descriptors)
 	ACTCON = 0xD0; // Enable the active clock tuning module, allow the module to automatically update the OSCTUNE register, use the USB host clock as reference
 }
 
-void USBCorePrepareForOutTransfer(unsigned char Endpoint_ID)
+void USBCorePrepareForOutTransfer(unsigned char Endpoint_ID, unsigned char Is_Data_1_Synchronization)
 {
 	// Cache the buffer descriptor access
 	volatile TUSBCoreEndpointBufferDescriptor *Pointer_Endpoint_Descriptor = &USB_Core_Endpoint_Descriptors[Endpoint_ID];
 
 	// Allow the maximum amount of data to be received
 	Pointer_Endpoint_Descriptor->Out_Descriptor.Bytes_Count = USB_CORE_ENDPOINT_PACKETS_SIZE;
-	Pointer_Endpoint_Descriptor->Out_Descriptor.Status = 0; // Use the default settings
+	Pointer_Endpoint_Descriptor->Out_Descriptor.Status = 0; // Clear all previous settings
+	Pointer_Endpoint_Descriptor->Out_Descriptor.Status_To_Peripheral.Is_Data_Toggle_Synchronized_Enabled = 1;
+	Pointer_Endpoint_Descriptor->Out_Descriptor.Status_To_Peripheral.Data_Toggle_Synchronization = Is_Data_1_Synchronization;
 	Pointer_Endpoint_Descriptor->Out_Descriptor.Status_To_Peripheral.Is_Owned_By_Peripheral = 1; // Give the endpoint OUT buffer ownership to the USB peripheral
 }
 
-void USBCorePrepareForInTransfer(unsigned char Endpoint_ID, void *Pointer_Data, unsigned char Data_Size)
+void USBCorePrepareForInTransfer(unsigned char Endpoint_ID, void *Pointer_Data, unsigned char Data_Size, unsigned char Is_Data_1_Synchronization)
 {
 	volatile TUSBCoreEndpointBufferDescriptor *Pointer_Endpoint_Descriptor;
 
@@ -167,7 +170,9 @@ void USBCorePrepareForInTransfer(unsigned char Endpoint_ID, void *Pointer_Data, 
 	Pointer_Endpoint_Descriptor->In_Descriptor.Bytes_Count = Data_Size;
 
 	// Configure the transfer settings
-	Pointer_Endpoint_Descriptor->In_Descriptor.Status = 0; // Use data 0 packets without synchronization
+	Pointer_Endpoint_Descriptor->In_Descriptor.Status = 0; // Clear all previous settings
+	Pointer_Endpoint_Descriptor->In_Descriptor.Status_To_Peripheral.Is_Data_Toggle_Synchronized_Enabled = 1;
+	Pointer_Endpoint_Descriptor->In_Descriptor.Status_To_Peripheral.Data_Toggle_Synchronization = Is_Data_1_Synchronization;
 	Pointer_Endpoint_Descriptor->In_Descriptor.Status_To_Peripheral.Is_Owned_By_Peripheral = 1; // Give the endpoint IN buffer ownership to the USB peripheral
 }
 
@@ -190,8 +195,8 @@ void USBCoreInterruptHandler(void)
 	if (UIRbits.URSTIF)
 	{
 		LOG(USB_CORE_IS_LOGGING_ENABLED, "Detected a Reset condition, starting enumeration process.");
-		UIR = 0; // Clear all interrupts to discard all other events
-
+		UIRbits.URSTIF = 0; // Clear the interrupt flag
+		//UCONbits.PKTDIS = 0;
 		return;
 	}
 
@@ -240,6 +245,16 @@ void USBCoreInterruptHandler(void)
 
 					switch (Pointer_Device_Request->bRequest)
 					{
+						case USB_CORE_DEVICE_REQUEST_ID_SET_ADDRESS:
+						{
+							unsigned char Address;
+
+							Address = (unsigned char) Pointer_Device_Request->wValue;
+							UADDR = Address;
+							LOG(USB_CORE_IS_LOGGING_ENABLED, "Host is setting the device address to 0x%02X.", Address);
+							break;
+						}
+
 						case USB_CORE_DEVICE_REQUEST_ID_GET_DESCRIPTOR:
 						{
 							unsigned char Descriptor_Type, Descriptor_Index;
@@ -249,8 +264,8 @@ void USBCoreInterruptHandler(void)
 							Descriptor_Index = (unsigned char) Pointer_Device_Request->wValue;
 							LOG(USB_CORE_IS_LOGGING_ENABLED, "Host is asking for %d bytes of the descriptor of type %d and index %d.", Pointer_Device_Request->wLength, Descriptor_Type, Descriptor_Index);
 
-							USBCorePrepareForInTransfer(0, (void *) Pointer_USB_Core_Descriptor_Device, sizeof(TUSBCoreDescriptorDevice));
-							USBCorePrepareForOutTransfer(0); // Re-enable packets reception
+							USBCorePrepareForInTransfer(0, (void *) Pointer_USB_Core_Descriptor_Device, sizeof(TUSBCoreDescriptorDevice), 1);
+							USBCorePrepareForOutTransfer(0, 0); // Re-enable packets reception
 							break;
 						}
 

@@ -79,9 +79,10 @@ void USBCoreInitialize(const void *Pointer_Descriptors);
 
 /** Configure the specified endpoint out buffer for an upcoming reception of data from the host.
  * @param Endpoint_ID The endpoint number (any endpoint other than 0 must have been enabled in the device descriptors).
+ * @param Is_Data_1_Synchronization The data synchronization value to expect from the host. Set to 0 for a DATA0 packet ID or set to 1 for a DATA1 packet ID.
  * @note The maximum endpoint packet size is always set to USB_CORE_ENDPOINT_PACKETS_SIZE.
  */
-void USBCorePrepareForOutTransfer(unsigned char Endpoint_ID);
+void USBCorePrepareForOutTransfer(unsigned char Endpoint_ID, unsigned char Is_Data_1_Synchronization);
 
 /** Must be called from the interrupt context to handle the USB interrupt. */
 void USBCoreInterruptHandler(void);
