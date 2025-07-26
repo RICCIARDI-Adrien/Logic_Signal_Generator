@@ -38,27 +38,8 @@
 //-------------------------------------------------------------------------------------------------
 // Private variables
 //-------------------------------------------------------------------------------------------------
-/** The application USB device descriptor. */
-static const TUSBCoreDescriptorDevice Main_USB_Device_Descriptor = // Store this into the program memory to save some RAM
-{
-	.bLength = sizeof(TUSBCoreDescriptorDevice),
-	.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_DEVICE,
-	.bcdUSB = USB_CORE_BCD_USB_SPECIFICATION_RELEASE_NUMBER,
-	.bDeviceClass = USB_CORE_DEVICE_CLASS_COMMUNICATIONS,
-	.bDeviceSubClass = USB_CORE_DEVICE_SUB_CLASS_NONE, // The host will check each interface
-	.bDeviceProtocol = USB_CORE_DEVICE_PROTOCOL_NONE,
-	.bMaxPacketSize0 = USB_CORE_ENDPOINT_PACKETS_SIZE,
-	.idVendor = 0x1240, // Use the Microchip VID for now
-	.idProduct = 0xFADA, // Use a random product ID
-	.bcdDevice = 0x0001, // Version 0.1 for now
-	.iManufacturer = 1,
-	.iProduct = 2,
-	.iSerialNumber = 3,
-	.bNumConfigurations = 1
-};
-
 /** The application interface descriptors. */
-static const TUSBCoreDescriptorInterface Main_USB_Interfaces[3] =
+static const TUSBCoreDescriptorInterface Main_USB_Interfaces_Descriptors_First_Configuration[3] =
 {
 	{
 		.bLength = USB_CORE_DESCRIPTOR_SIZE_INTERFACE,
@@ -94,27 +75,77 @@ static const TUSBCoreDescriptorInterface Main_USB_Interfaces[3] =
 		.iInterface = 0
 	}
 };
-
-/** The application unique USB configuration descriptor. */
-static const TUSBCoreDescriptorConfiguration Main_USB_Configuration_Descriptor = // Store this into the program memory to save some RAM
+static const TUSBCoreDescriptorInterface Main_USB_Interfaces_Descriptors_Second_Configuration[3] =
 {
-	.bLength = USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION,
-	.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_CONFIGURATION,
-	.wTotalLength = USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION + (3 * USB_CORE_DESCRIPTOR_SIZE_INTERFACE), // TEST
-	.bNumInterfaces = 3, // TEST
-	.bConfigurationValue = 1,
-	.iConfiguration = 1,
-	.bmAttributes = 0, // The device is not self-powered and does not support the remove wakeup feature
-	.bMaxPower = 255, // Take as much power as possible, just in case the logic signal generator needs to power a board
-	.Pointer_Interfaces = Main_USB_Interfaces
+	{
+		.bLength = USB_CORE_DESCRIPTOR_SIZE_INTERFACE,
+		.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_INTERFACE,
+		.bInterfaceNumber = 0,
+		.bAlternateSetting = 0,
+		.bNumEndpoints = 0,
+		.bInterfaceClass = 7,
+		.bInterfaceSubClass = 8,
+		.bInterfaceProtocol = 9,
+		.iInterface = 0
+	},
+	{
+		.bLength = USB_CORE_DESCRIPTOR_SIZE_INTERFACE,
+		.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_INTERFACE,
+		.bInterfaceNumber = 1,
+		.bAlternateSetting = 0,
+		.bNumEndpoints = 0,
+		.bInterfaceClass = 100,
+		.bInterfaceSubClass = 101,
+		.bInterfaceProtocol = 102,
+		.iInterface = 0
+	}
 };
 
-/** Gather all the various USB descriptors needed by the USB stack. */
-static const TUSBCoreConfiguration Main_USB_Configuration = // Store this into the program memory to save some RAM
+/** The application unique USB configuration descriptor. */
+static const TUSBCoreDescriptorConfiguration Main_USB_Configuration_Descriptors[2] = // Store this into the program memory to save some RAM
 {
-	.Pointer_Device_Descriptor = &Main_USB_Device_Descriptor,
-	.Configurations_Count = 1,
-	.Pointer_Configuration_Descriptors = &Main_USB_Configuration_Descriptor
+	{
+		.bLength = USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION,
+		.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_CONFIGURATION,
+		.wTotalLength = USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION + (3 * USB_CORE_DESCRIPTOR_SIZE_INTERFACE), // TEST
+		.bNumInterfaces = 3, // TEST
+		.bConfigurationValue = 1,
+		.iConfiguration = 0,
+		.bmAttributes = 0, // The device is not self-powered and does not support the remove wakeup feature
+		.bMaxPower = 255, // Take as much power as possible, just in case the logic signal generator needs to power a board
+		.Pointer_Interfaces = Main_USB_Interfaces_Descriptors_Second_Configuration
+	},
+	{
+		.bLength = USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION,
+		.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_CONFIGURATION,
+		.wTotalLength = USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION + (2 * USB_CORE_DESCRIPTOR_SIZE_INTERFACE), // TEST
+		.bNumInterfaces = 2, // TEST
+		.bConfigurationValue = 6,
+		.iConfiguration = 0,
+		.bmAttributes = 0,
+		.bMaxPower = 10,
+		.Pointer_Interfaces = Main_USB_Interfaces_Descriptors_Second_Configuration
+	}
+};
+
+/** The application USB device descriptor. */
+static const TUSBCoreDescriptorDevice Main_USB_Device_Descriptor = // Store this into the program memory to save some RAM
+{
+	.bLength = USB_CORE_DESCRIPTOR_SIZE_DEVICE,
+	.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_DEVICE,
+	.bcdUSB = USB_CORE_BCD_USB_SPECIFICATION_RELEASE_NUMBER,
+	.bDeviceClass = USB_CORE_DEVICE_CLASS_COMMUNICATIONS,
+	.bDeviceSubClass = USB_CORE_DEVICE_SUB_CLASS_NONE, // The host will check each interface
+	.bDeviceProtocol = USB_CORE_DEVICE_PROTOCOL_NONE,
+	.bMaxPacketSize0 = USB_CORE_ENDPOINT_PACKETS_SIZE,
+	.idVendor = 0x1240, // Use the Microchip VID for now
+	.idProduct = 0xFADA, // Use a random product ID
+	.bcdDevice = 0x0001, // Version 0.1 for now
+	.iManufacturer = 1,
+	.iProduct = 2,
+	.iSerialNumber = 3,
+	.bNumConfigurations = 2,
+	.Pointer_Configurations = Main_USB_Configuration_Descriptors
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -150,7 +181,7 @@ void main(void)
 	LOG(1, "\033[33mInitialization complete.\033[0m");
 
 	// TEST
-	USBCoreInitialize(&Main_USB_Configuration);
+	USBCoreInitialize(&Main_USB_Device_Descriptor);
 
 	// TEST
 	ANSELBbits.ANSB2 = 0;

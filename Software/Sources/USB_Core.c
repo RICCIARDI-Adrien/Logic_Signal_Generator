@@ -93,7 +93,7 @@ static volatile TUSBCoreEndpointBufferDescriptor USB_Core_Endpoint_Descriptors[3
 /** Reserve the space for the USB buffers (TODO this is hardcoded for now). */
 static volatile unsigned char USB_Core_Buffers[128] __at(0x500);
 
-static const TUSBCoreConfiguration *Pointer_USB_Core_Configuration;
+static const TUSBCoreDescriptorDevice *Pointer_USB_Core_Device_Descriptor;
 
 //-------------------------------------------------------------------------------------------------
 // Private functions
@@ -127,7 +127,7 @@ static inline void USBCoreProcessGetConfigurationDescriptor(unsigned char Descri
 	const TUSBCoreDescriptorConfiguration *Pointer_Configuration_Descriptor;
 
 	// TODO select the correct configuration
-	Pointer_Configuration_Descriptor = Pointer_USB_Core_Configuration->Pointer_Configuration_Descriptors;
+	Pointer_Configuration_Descriptor = Pointer_USB_Core_Device_Descriptor->Pointer_Configurations;
 
 	// Always start from the configuration descriptor itself
 	memcpy((void *) Pointer_Endpoint_Descriptor_Buffer, Pointer_Configuration_Descriptor, USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION);
@@ -153,7 +153,7 @@ static inline void USBCoreProcessGetConfigurationDescriptor(unsigned char Descri
 //-------------------------------------------------------------------------------------------------
 // Public functions
 //-------------------------------------------------------------------------------------------------
-void USBCoreInitialize(const TUSBCoreConfiguration *Pointer_Configuration)
+void USBCoreInitialize(const TUSBCoreDescriptorDevice *Pointer_Device_Descriptor)
 {
 	unsigned char i, Endpoints_Count = 1; // Will always be 1 or more because of the mandatory control endpoint
 
@@ -164,7 +164,7 @@ void USBCoreInitialize(const TUSBCoreConfiguration *Pointer_Configuration)
 	UCON = 0;
 
 	// Keep access to the various USB descriptors
-	Pointer_USB_Core_Configuration = Pointer_Configuration;
+	Pointer_USB_Core_Device_Descriptor = Pointer_Device_Descriptor;
 
 	// TODO configure the buffer descriptors
 	USB_Core_Endpoint_Descriptors[0].Out_Descriptor.Pointer_Address = USB_Core_Buffers;
@@ -390,7 +390,7 @@ void USBCoreInterruptHandler(void)
 
 								case USB_CORE_DESCRIPTOR_TYPE_DEVICE:
 									LOG(USB_CORE_IS_LOGGING_ENABLED, "Selecting the device descriptor.");
-									USBCorePrepareForInTransfer(0, (void *) Pointer_USB_Core_Configuration->Pointer_Device_Descriptor, sizeof(TUSBCoreDescriptorDevice), 1);
+									USBCorePrepareForInTransfer(0, (void *) Pointer_USB_Core_Device_Descriptor, USB_CORE_DESCRIPTOR_SIZE_DEVICE, 1);
 									USBCorePrepareForOutTransfer(0, 0); // Re-enable packets reception
 									break;
 

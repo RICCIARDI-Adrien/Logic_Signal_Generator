@@ -19,6 +19,8 @@
 /** The size in byte of any endpoint buffer (this conforms to the USB 2.0 specifications for full-speed devices). */
 #define USB_CORE_ENDPOINT_PACKETS_SIZE 64
 
+/** The size in bytes of the device descriptor. */
+#define USB_CORE_DESCRIPTOR_SIZE_DEVICE 18
 /** The size in bytes of the configuration descriptor. */
 #define USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION 9
 /** The size in bytes of the interface descriptor. */
@@ -56,25 +58,6 @@ typedef enum : unsigned char
 	USB_CORE_DEVICE_PROTOCOL_NONE = 0 //!< No device class-specific protocol is used.
 } TUSBCoreDeviceProtocol;
 
-/** An USB device descriptor, using the USB naming for simplicity. */
-typedef struct
-{
-	unsigned char bLength;
-	TUSBCoreDescriptorType bDescriptorType;
-	unsigned char bcdUSB[2];
-	TUSBCoreDeviceClass bDeviceClass;
-	unsigned char bDeviceSubClass;
-	unsigned char bDeviceProtocol;
-	unsigned char bMaxPacketSize0;
-	unsigned short idVendor;
-	unsigned short idProduct;
-	unsigned short bcdDevice;
-	unsigned char iManufacturer;
-	unsigned char iProduct;
-	unsigned char iSerialNumber;
-	unsigned char bNumConfigurations;
-} __attribute__((packed)) TUSBCoreDescriptorDevice;
-
 /** An USB interface descriptor using the USB naming for simplicity. See the USB specifications 2.0 table 9.12. */
 typedef struct
 {
@@ -103,21 +86,33 @@ typedef struct
 	const TUSBCoreDescriptorInterface *Pointer_Interfaces; //!< This field is not part of the USB specification.
 } __attribute__((packed)) TUSBCoreDescriptorConfiguration;
 
-/** Gather all the various USB descriptors needed by the USB stack. */
+/** An USB device descriptor, using the USB naming for simplicity. */
 typedef struct
 {
-	const TUSBCoreDescriptorDevice *Pointer_Device_Descriptor; //!< The unique device descriptor.
-	unsigned char Configurations_Count; //!< How many configurations to manage. Their bConfigurationValue field must start from 1 and stay increase by one in order.
-	const TUSBCoreDescriptorConfiguration *Pointer_Configuration_Descriptors;
-} TUSBCoreConfiguration;
+	unsigned char bLength;
+	TUSBCoreDescriptorType bDescriptorType;
+	unsigned char bcdUSB[2];
+	TUSBCoreDeviceClass bDeviceClass;
+	unsigned char bDeviceSubClass;
+	unsigned char bDeviceProtocol;
+	unsigned char bMaxPacketSize0;
+	unsigned short idVendor;
+	unsigned short idProduct;
+	unsigned short bcdDevice;
+	unsigned char iManufacturer;
+	unsigned char iProduct;
+	unsigned char iSerialNumber;
+	unsigned char bNumConfigurations;
+	const TUSBCoreDescriptorConfiguration *Pointer_Configurations; //!< This field is not part of the USB specification.
+} __attribute__((packed)) TUSBCoreDescriptorDevice;
 
 //-------------------------------------------------------------------------------------------------
 // Functions
 //-------------------------------------------------------------------------------------------------
 /** Configure the USB peripheral for full-speed operations and attach the device to the bus.
- * @param Pointer_Configuration Gather all configuration settings.
+ * @param Pointer_Device_Descriptor Gather all configuration settings.
  */
-void USBCoreInitialize(const TUSBCoreConfiguration *Pointer_Configuration);
+void USBCoreInitialize(const TUSBCoreDescriptorDevice *Pointer_Device_Descriptor);
 
 /** Configure the specified endpoint out buffer for an upcoming reception of data from the host.
  * @param Endpoint_ID The endpoint number (any endpoint other than 0 must have been enabled in the device descriptors).
