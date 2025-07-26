@@ -14,7 +14,7 @@ SOURCES = \
 
 CC = xc8-cc
 # The -Wa,-a argument tells the assembler to generate a listing file
-CFLAGS = -mcpu=18F25K50 -D_XTAL_FREQ=48000000 -DMAKEFILE_FIRMWARE_VERSION=\\\"$(FIRMWARE_VERSION)\\\" -Wa,-a
+CFLAGS = -mcpu=18F25K50 -D_XTAL_FREQ=48000000 -DMAKEFILE_FIRMWARE_VERSION=\\\"$(FIRMWARE_VERSION)\\\" -Wa,-a -Wl,-Map=Logic_Signal_Generator.map
 
 all: $(PATH_BINARIES) $(PATH_OBJECTS)
 	cd $(PATH_OBJECTS) && $(CC) $(CFLAGS) -I$(PATH_INCLUDES) $(SOURCES) -o $(BINARY_NAME)
