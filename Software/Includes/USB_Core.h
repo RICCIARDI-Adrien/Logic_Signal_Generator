@@ -19,6 +19,11 @@
 /** The size in byte of any endpoint buffer (this conforms to the USB 2.0 specifications for full-speed devices). */
 #define USB_CORE_ENDPOINT_PACKETS_SIZE 64
 
+/** The size in bytes of the configuration descriptor. */
+#define USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION 9
+/** The size in bytes of the interface descriptor. */
+#define USB_CORE_DESCRIPTOR_SIZE_INTERFACE 9
+
 //-------------------------------------------------------------------------------------------------
 // Types
 //-------------------------------------------------------------------------------------------------
@@ -70,6 +75,20 @@ typedef struct
 	unsigned char bNumConfigurations;
 } __attribute__((packed)) TUSBCoreDescriptorDevice;
 
+/** An USB interface descriptor using the USB naming for simplicity. See the USB specifications 2.0 table 9.12. */
+typedef struct
+{
+	unsigned char bLength;
+	TUSBCoreDescriptorType bDescriptorType;
+	unsigned char bInterfaceNumber;
+	unsigned char bAlternateSetting;
+	unsigned char bNumEndpoints; //!< The endpoint 0, if used, is excluded from this value.
+	unsigned char bInterfaceClass;
+	unsigned char bInterfaceSubClass;
+	unsigned char bInterfaceProtocol;
+	unsigned char iInterface;
+} __attribute__((packed)) TUSBCoreDescriptorInterface;
+
 /** An USB configuration descriptor, using the USB naming for simplicity. See the USB specifications 2.0 table 9.10. */
 typedef struct
 {
@@ -81,6 +100,7 @@ typedef struct
 	unsigned char iConfiguration;
 	unsigned char bmAttributes;
 	unsigned char bMaxPower; //!< Expressed in 2mA units.
+	const TUSBCoreDescriptorInterface *Pointer_Interfaces; //!< This field is not part of the USB specification.
 } __attribute__((packed)) TUSBCoreDescriptorConfiguration;
 
 /** Gather all the various USB descriptors needed by the USB stack. */
@@ -105,6 +125,9 @@ void USBCoreInitialize(const TUSBCoreConfiguration *Pointer_Configuration);
  * @note The maximum endpoint packet size is always set to USB_CORE_ENDPOINT_PACKETS_SIZE.
  */
 void USBCorePrepareForOutTransfer(unsigned char Endpoint_ID, unsigned char Is_Data_1_Synchronization);
+
+/** TODO */
+void USBCorePrepareForInTransfer(unsigned char Endpoint_ID, void *Pointer_Data, unsigned char Data_Size, unsigned char Is_Data_1_Synchronization);
 
 /** Must be called from the interrupt context to handle the USB interrupt. */
 void USBCoreInterruptHandler(void);

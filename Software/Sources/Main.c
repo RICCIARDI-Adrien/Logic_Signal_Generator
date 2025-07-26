@@ -57,16 +57,56 @@ static const TUSBCoreDescriptorDevice Main_USB_Device_Descriptor = // Store this
 	.bNumConfigurations = 1
 };
 
+/** The application interface descriptors. */
+static const TUSBCoreDescriptorInterface Main_USB_Interfaces[3] =
+{
+	{
+		.bLength = USB_CORE_DESCRIPTOR_SIZE_INTERFACE,
+		.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_INTERFACE,
+		.bInterfaceNumber = 0,
+		.bAlternateSetting = 0,
+		.bNumEndpoints = 0,
+		.bInterfaceClass = 255,
+		.bInterfaceSubClass = 255,
+		.bInterfaceProtocol = 255,
+		.iInterface = 0
+	},
+	{
+		.bLength = USB_CORE_DESCRIPTOR_SIZE_INTERFACE,
+		.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_INTERFACE,
+		.bInterfaceNumber = 1,
+		.bAlternateSetting = 0,
+		.bNumEndpoints = 0,
+		.bInterfaceClass = 47,
+		.bInterfaceSubClass = 32,
+		.bInterfaceProtocol = 188,
+		.iInterface = 0
+	},
+	{
+		.bLength = USB_CORE_DESCRIPTOR_SIZE_INTERFACE,
+		.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_INTERFACE,
+		.bInterfaceNumber = 2,
+		.bAlternateSetting = 0,
+		.bNumEndpoints = 0,
+		.bInterfaceClass = 9,
+		.bInterfaceSubClass = 17,
+		.bInterfaceProtocol = 2,
+		.iInterface = 0
+	}
+};
+
 /** The application unique USB configuration descriptor. */
 static const TUSBCoreDescriptorConfiguration Main_USB_Configuration_Descriptor = // Store this into the program memory to save some RAM
 {
-	.bLength = sizeof(TUSBCoreDescriptorConfiguration),
+	.bLength = USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION,
 	.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_CONFIGURATION,
-	.wTotalLength = 42, // TEST
+	.wTotalLength = USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION + (3 * USB_CORE_DESCRIPTOR_SIZE_INTERFACE), // TEST
+	.bNumInterfaces = 3, // TEST
 	.bConfigurationValue = 1,
 	.iConfiguration = 1,
 	.bmAttributes = 0, // The device is not self-powered and does not support the remove wakeup feature
-	.bMaxPower = 255 // Take as much power as possible, just in case the logic signal generator needs to power a board
+	.bMaxPower = 255, // Take as much power as possible, just in case the logic signal generator needs to power a board
+	.Pointer_Interfaces = Main_USB_Interfaces
 };
 
 /** Gather all the various USB descriptors needed by the USB stack. */

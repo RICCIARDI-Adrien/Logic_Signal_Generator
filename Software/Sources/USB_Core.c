@@ -115,6 +115,41 @@ static void USBCoreStallEndpoint(unsigned char Endpoint_ID)
 	Pointer_Endpoint_Descriptor->In_Descriptor.Status_From_Peripheral.Is_Owned_By_Peripheral = 1;
 }
 
+/** Send to the host the expected amount of configuration data. This function takes care of preparing the appropriate control pipe IN transfer.
+ * @param Descriptor_Index The configuration to obtain information from.
+ * @param Length The amount of configuration bytes requested by the host.
+ */
+static inline void USBCoreProcessGetConfigurationDescriptor(unsigned char Descriptor_Index, unsigned char Length)
+{
+	// Cache the control descriptor buffer address
+	volatile unsigned char *Pointer_Endpoint_Descriptor_Buffer = USB_Core_Endpoint_Descriptors[0].In_Descriptor.Pointer_Address;
+	unsigned char Interfaces_Count, i;
+	const TUSBCoreDescriptorConfiguration *Pointer_Configuration_Descriptor;
+
+	// TODO select the correct configuration
+	Pointer_Configuration_Descriptor = Pointer_USB_Core_Configuration->Pointer_Configuration_Descriptors;
+
+	// Always start from the configuration descriptor itself
+	memcpy((void *) Pointer_Endpoint_Descriptor_Buffer, Pointer_Configuration_Descriptor, USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION);
+
+	// Append the interfaces if asked to
+	if ((Length > USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION) && (Length <= USB_CORE_ENDPOINT_PACKETS_SIZE))
+	{
+		Interfaces_Count = Pointer_Configuration_Descriptor->bNumInterfaces;
+		Pointer_Endpoint_Descriptor_Buffer += USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION;
+		LOG(USB_CORE_IS_LOGGING_ENABLED, "The configuration descriptor has %u interfaces.", Interfaces_Count);
+
+		// Append all interface descriptors
+		for (i = 0; i < Interfaces_Count; i++)
+		{
+			memcpy((void *) Pointer_Endpoint_Descriptor_Buffer, &Pointer_Configuration_Descriptor->Pointer_Interfaces[i], USB_CORE_DESCRIPTOR_SIZE_INTERFACE);
+			Pointer_Endpoint_Descriptor_Buffer += USB_CORE_DESCRIPTOR_SIZE_INTERFACE;
+		}
+	}
+
+	USBCorePrepareForInTransfer(0, NULL, Length, 1);
+}
+
 //-------------------------------------------------------------------------------------------------
 // Public functions
 //-------------------------------------------------------------------------------------------------
@@ -189,7 +224,7 @@ void USBCorePrepareForInTransfer(unsigned char Endpoint_ID, void *Pointer_Data, 
 	while (Pointer_Endpoint_Descriptor->In_Descriptor.Status_From_Peripheral.Is_Owned_By_Peripheral);
 
 	// Copy the data to the USB RAM
-	memcpy((void *) Pointer_Endpoint_Descriptor->In_Descriptor.Pointer_Address, Pointer_Data, Data_Size);
+	if (Pointer_Data != NULL) memcpy((void *) Pointer_Endpoint_Descriptor->In_Descriptor.Pointer_Address, Pointer_Data, Data_Size);
 	Pointer_Endpoint_Descriptor->In_Descriptor.Bytes_Count = Data_Size;
 
 	// Configure the transfer settings
@@ -348,8 +383,8 @@ void USBCoreInterruptHandler(void)
 							switch (Descriptor_Type)
 							{
 								case USB_CORE_DESCRIPTOR_TYPE_CONFIGURATION:
-									LOG(USB_CORE_IS_LOGGING_ENABLED, "Selecting the first configuration descriptor."); // TODO support multiple configuration descriptors
-									USBCorePrepareForInTransfer(0, (void *) Pointer_USB_Core_Configuration->Pointer_Configuration_Descriptors, (unsigned char) Pointer_Device_Request->wLength, 1);
+									LOG(USB_CORE_IS_LOGGING_ENABLED, "Selecting the configuration descriptor %u.", Descriptor_Index);
+									USBCoreProcessGetConfigurationDescriptor(Descriptor_Index, (unsigned char) Pointer_Device_Request->wLength);
 									USBCorePrepareForOutTransfer(0, 0); // Re-enable packets reception
 									break;
 
