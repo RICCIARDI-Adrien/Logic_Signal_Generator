@@ -184,11 +184,42 @@ void USBCoreInterruptHandler(void)
 	volatile unsigned char *Pointer_Endpoint_Buffer;
 	volatile TUSBCoreDeviceRequest *Pointer_Device_Request;
 
+	LOG(USB_CORE_IS_LOGGING_ENABLED, "\033[33m--- Entering USB handler ---\033[0m");
+
+	// Display low level debugging information
 	#if USB_CORE_IS_LOGGING_ENABLED
-	if (UEIR != 0)
 	{
-		LOG(USB_CORE_IS_LOGGING_ENABLED, "An error was detected, UEIR = 0x%02X.", UEIR);
-		UEIR = 0; // Clear all errors to see the next ones
+		volatile unsigned char *Pointer_Endpoint_Register;
+
+		// Display the fired interrupts
+		printf("Status interrupts register : 0x%02X", UIR);
+		if (UIRbits.SOFIF) printf(" SOF");
+		if (UIRbits.STALLIF) printf(" STALL");
+		if (UIRbits.IDLEIF) printf(" IDLE");
+		if (UIRbits.TRNIF) printf(" TRANSCOMP");
+		if (UIRbits.ACTVIF) printf(" BUSACT");
+		if (UIRbits.UERRIF) printf(" USBERR");
+		if (UIRbits.URSTIF) printf(" RESET");
+		printf(".\r\n");
+
+		// Display any error that occurred
+		if (UEIR != 0)
+		{
+			printf("An error was detected, UEIR = 0x%02X.\r\n", UEIR);
+			UEIR = 0; // Clear all errors to see the next ones
+		}
+
+		// Tell if a SETUP packet disabled the SIE
+		if (UCONbits.PKTDIS) printf("USB packet processing is disabled (PKTDIS).\r\n");
+
+		// Display the last endpoint activity
+		Endpoint_ID = USTAT >> 3;
+		Is_In_Transfer = USTATbits.DIR;
+		printf("Last endpoint ID : %u, transaction type : %s.\r\n", Endpoint_ID, Is_In_Transfer ? "IN" : "OUT");
+
+		// Tell whether the endpoint is stalled by the host
+		Pointer_Endpoint_Register = &UEP0 + Endpoint_ID;
+		if (*Pointer_Endpoint_Register & 0x01) printf("The endpoint is stalled.\r\n");
 	}
 	#endif
 
