@@ -93,7 +93,7 @@ static volatile TUSBCoreEndpointBufferDescriptor USB_Core_Endpoint_Descriptors[3
 /** Reserve the space for the USB buffers (TODO this is hardcoded for now). */
 static volatile unsigned char USB_Core_Buffers[128] __at(0x500);
 
-static const TUSBCoreDescriptorDevice *Pointer_USB_Core_Descriptor_Device;
+static const TUSBCoreConfiguration *Pointer_USB_Core_Configuration;
 
 //-------------------------------------------------------------------------------------------------
 // Private functions
@@ -118,7 +118,7 @@ static void USBCoreStallEndpoint(unsigned char Endpoint_ID)
 //-------------------------------------------------------------------------------------------------
 // Public functions
 //-------------------------------------------------------------------------------------------------
-void USBCoreInitialize(const void *Pointer_Descriptors)
+void USBCoreInitialize(const TUSBCoreConfiguration *Pointer_Configuration)
 {
 	unsigned char i, Endpoints_Count = 1; // Will always be 1 or more because of the mandatory control endpoint
 
@@ -129,7 +129,7 @@ void USBCoreInitialize(const void *Pointer_Descriptors)
 	UCON = 0;
 
 	// Keep access to the various USB descriptors
-	Pointer_USB_Core_Descriptor_Device = Pointer_Descriptors; // TODO
+	Pointer_USB_Core_Configuration = Pointer_Configuration;
 
 	// TODO configure the buffer descriptors
 	USB_Core_Endpoint_Descriptors[0].Out_Descriptor.Pointer_Address = USB_Core_Buffers;
@@ -347,9 +347,15 @@ void USBCoreInterruptHandler(void)
 
 							switch (Descriptor_Type)
 							{
+								case USB_CORE_DESCRIPTOR_TYPE_CONFIGURATION:
+									LOG(USB_CORE_IS_LOGGING_ENABLED, "Selecting the first configuration descriptor."); // TODO support multiple configuration descriptors
+									USBCorePrepareForInTransfer(0, (void *) Pointer_USB_Core_Configuration->Pointer_Configuration_Descriptors, (unsigned char) Pointer_Device_Request->wLength, 1);
+									USBCorePrepareForOutTransfer(0, 0); // Re-enable packets reception
+									break;
+
 								case USB_CORE_DESCRIPTOR_TYPE_DEVICE:
 									LOG(USB_CORE_IS_LOGGING_ENABLED, "Selecting the device descriptor.");
-									USBCorePrepareForInTransfer(0, (void *) Pointer_USB_Core_Descriptor_Device, sizeof(TUSBCoreDescriptorDevice), 1);
+									USBCorePrepareForInTransfer(0, (void *) Pointer_USB_Core_Configuration->Pointer_Device_Descriptor, sizeof(TUSBCoreDescriptorDevice), 1);
 									USBCorePrepareForOutTransfer(0, 0); // Re-enable packets reception
 									break;
 

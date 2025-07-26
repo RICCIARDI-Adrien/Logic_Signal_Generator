@@ -70,13 +70,34 @@ typedef struct
 	unsigned char bNumConfigurations;
 } __attribute__((packed)) TUSBCoreDescriptorDevice;
 
+/** An USB configuration descriptor, using the USB naming for simplicity. See the USB specifications 2.0 table 9.10. */
+typedef struct
+{
+	unsigned char bLength;
+	TUSBCoreDescriptorType bDescriptorType;
+	unsigned short wTotalLength; //!< This is the combined length of the configuration, related interfaces and endpoints.
+	unsigned char bNumInterfaces;
+	unsigned char bConfigurationValue;
+	unsigned char iConfiguration;
+	unsigned char bmAttributes;
+	unsigned char bMaxPower; //!< Expressed in 2mA units.
+} __attribute__((packed)) TUSBCoreDescriptorConfiguration;
+
+/** Gather all the various USB descriptors needed by the USB stack. */
+typedef struct
+{
+	const TUSBCoreDescriptorDevice *Pointer_Device_Descriptor; //!< The unique device descriptor.
+	unsigned char Configurations_Count; //!< How many configurations to manage. Their bConfigurationValue field must start from 1 and stay increase by one in order.
+	const TUSBCoreDescriptorConfiguration *Pointer_Configuration_Descriptors;
+} TUSBCoreConfiguration;
+
 //-------------------------------------------------------------------------------------------------
 // Functions
 //-------------------------------------------------------------------------------------------------
 /** Configure the USB peripheral for full-speed operations and attach the device to the bus.
- * TODO
+ * @param Pointer_Configuration Gather all configuration settings.
  */
-void USBCoreInitialize(const void *Pointer_Descriptors);
+void USBCoreInitialize(const TUSBCoreConfiguration *Pointer_Configuration);
 
 /** Configure the specified endpoint out buffer for an upcoming reception of data from the host.
  * @param Endpoint_ID The endpoint number (any endpoint other than 0 must have been enabled in the device descriptors).
