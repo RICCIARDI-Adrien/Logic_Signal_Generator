@@ -116,31 +116,52 @@ static void USBCoreStallEndpoint(unsigned char Endpoint_ID)
 }
 
 /** Send to the host the expected amount of configuration data. This function takes care of preparing the appropriate control pipe IN transfer.
- * @param Descriptor_Index The configuration to obtain information from.
+ * @param Configuration_Index The configuration to obtain information from.
  * @param Length The amount of configuration bytes requested by the host.
  */
-static inline void USBCoreProcessGetConfigurationDescriptor(unsigned char Descriptor_Index, unsigned char Length)
+static inline void USBCoreProcessGetConfigurationDescriptor(unsigned char Configuration_Index, unsigned char Length)
 {
 	// Cache the control descriptor buffer address
 	volatile unsigned char *Pointer_Endpoint_Descriptor_Buffer = USB_Core_Endpoint_Descriptors[0].In_Descriptor.Pointer_Address;
-	unsigned char Interfaces_Count, i;
+	unsigned char Count, i;
 	const TUSBCoreDescriptorConfiguration *Pointer_Configuration_Descriptor;
 
-	// TODO select the correct configuration
-	Pointer_Configuration_Descriptor = Pointer_USB_Core_Device_Descriptor->Pointer_Configurations;
+	// Check the correctness of some values
+	// The requested total length
+	if (Length > USB_CORE_ENDPOINT_PACKETS_SIZE)
+	{
+		LOG(USB_CORE_IS_LOGGING_ENABLED, "Error : the requested length %u is greater than the packet size %u, aborting.", Length, USB_CORE_ENDPOINT_PACKETS_SIZE);
+		return;
+	}
+	// There must be at least one configuration
+	Count = Pointer_USB_Core_Device_Descriptor->bNumConfigurations;
+	if (Count == 0)
+	{
+		LOG(USB_CORE_IS_LOGGING_ENABLED, "Error : the device descriptor has 0 configuration, which is not allowed, aborting.");
+		return;
+	}
+	if (Configuration_Index >= Count)
+	{
+		LOG(USB_CORE_IS_LOGGING_ENABLED, "Error : an out-of-bounds configuration index %u has been requested (the device descriptor has %u configurations), aborting.", Configuration_Index, Count);
+		return;
+	}
+
+	// Find the requested configuration
+	Pointer_Configuration_Descriptor = &Pointer_USB_Core_Device_Descriptor->Pointer_Configurations[Configuration_Index];
+	LOG(USB_CORE_IS_LOGGING_ENABLED, "Found the configuration descriptor %u.", Configuration_Index);
 
 	// Always start from the configuration descriptor itself
 	memcpy((void *) Pointer_Endpoint_Descriptor_Buffer, Pointer_Configuration_Descriptor, USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION);
 
 	// Append the interfaces if asked to
-	if ((Length > USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION) && (Length <= USB_CORE_ENDPOINT_PACKETS_SIZE))
+	if (Length > USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION)
 	{
-		Interfaces_Count = Pointer_Configuration_Descriptor->bNumInterfaces;
+		Count = Pointer_Configuration_Descriptor->bNumInterfaces;
 		Pointer_Endpoint_Descriptor_Buffer += USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION;
-		LOG(USB_CORE_IS_LOGGING_ENABLED, "The configuration descriptor has %u interfaces.", Interfaces_Count);
+		LOG(USB_CORE_IS_LOGGING_ENABLED, "The configuration descriptor has %u interfaces.", Count);
 
 		// Append all interface descriptors
-		for (i = 0; i < Interfaces_Count; i++)
+		for (i = 0; i < Count; i++)
 		{
 			memcpy((void *) Pointer_Endpoint_Descriptor_Buffer, &Pointer_Configuration_Descriptor->Pointer_Interfaces[i], USB_CORE_DESCRIPTOR_SIZE_INTERFACE);
 			Pointer_Endpoint_Descriptor_Buffer += USB_CORE_DESCRIPTOR_SIZE_INTERFACE;
@@ -383,7 +404,6 @@ void USBCoreInterruptHandler(void)
 							switch (Descriptor_Type)
 							{
 								case USB_CORE_DESCRIPTOR_TYPE_CONFIGURATION:
-									LOG(USB_CORE_IS_LOGGING_ENABLED, "Selecting the configuration descriptor %u.", Descriptor_Index);
 									USBCoreProcessGetConfigurationDescriptor(Descriptor_Index, (unsigned char) Pointer_Device_Request->wLength);
 									USBCorePrepareForOutTransfer(0, 0); // Re-enable packets reception
 									break;
