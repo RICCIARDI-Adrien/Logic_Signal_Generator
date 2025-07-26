@@ -96,6 +96,26 @@ static volatile unsigned char USB_Core_Buffers[128] __at(0x500);
 static const TUSBCoreDescriptorDevice *Pointer_USB_Core_Descriptor_Device;
 
 //-------------------------------------------------------------------------------------------------
+// Private functions
+//-------------------------------------------------------------------------------------------------
+/** Stall the IN buffer descriptor of the specified endpoint.
+ * @param Endpoint_ID The endpoint to stall.
+ * @note This is mostly used with the control endpoint to tell that a feature is not supported.
+ */
+static void USBCoreStallEndpoint(unsigned char Endpoint_ID)
+{
+	volatile TUSBCoreEndpointBufferDescriptor *Pointer_Endpoint_Descriptor;
+
+	// Cache the buffer descriptor access
+	Pointer_Endpoint_Descriptor = &USB_Core_Endpoint_Descriptors[Endpoint_ID];
+
+	// Get immediate ownership of the endpoint, do not wait for it to be returned by the SIE (otherwise, this function would block if multiple STALL need to be issued in a row)
+	Pointer_Endpoint_Descriptor->In_Descriptor.Status = 0;
+	Pointer_Endpoint_Descriptor->In_Descriptor.Status_To_Peripheral.Is_Buffer_Stalled = 1;
+	Pointer_Endpoint_Descriptor->In_Descriptor.Status_From_Peripheral.Is_Owned_By_Peripheral = 1;
+}
+
+//-------------------------------------------------------------------------------------------------
 // Public functions
 //-------------------------------------------------------------------------------------------------
 void USBCoreInitialize(const void *Pointer_Descriptors)
@@ -130,7 +150,7 @@ void USBCoreInitialize(const void *Pointer_Descriptors)
 
 	// Configure the interrupts
 	PIE3bits.USBIE = 1; // Enable the USB peripheral global interrupt
-	UIE = 0x09; // Enable the Transaction Complete and the Reset interrupts
+	UIE = 0x29; // Enable the STALL Handshake, the Transaction Complete and the Reset interrupts
 	IPR3bits.USBIP = 1; // Set the USB interrupt as high priority
 
 	// Enable the USB module and attach the device to the USB bus
@@ -144,6 +164,9 @@ void USBCorePrepareForOutTransfer(unsigned char Endpoint_ID, unsigned char Is_Da
 {
 	// Cache the buffer descriptor access
 	volatile TUSBCoreEndpointBufferDescriptor *Pointer_Endpoint_Descriptor = &USB_Core_Endpoint_Descriptors[Endpoint_ID];
+
+	// Wait for any transfer concerning the endpoint to finish
+	while (Pointer_Endpoint_Descriptor->Out_Descriptor.Status_From_Peripheral.Is_Owned_By_Peripheral);
 
 	// Allow the maximum amount of data to be received
 	Pointer_Endpoint_Descriptor->Out_Descriptor.Bytes_Count = USB_CORE_ENDPOINT_PACKETS_SIZE;
@@ -181,7 +204,7 @@ void USBCoreInterruptHandler(void)
 	static unsigned char Device_Address = 0; // Keep the assigned address to set it in a later interrupt
 	unsigned char Endpoint_ID, Is_In_Transfer;
 	volatile TUSBCoreEndpointBufferDescriptor *Pointer_Endpoint_Descriptor;
-	volatile unsigned char *Pointer_Endpoint_Buffer;
+	volatile unsigned char *Pointer_Endpoint_Buffer, *Pointer_Endpoint_Register;
 	volatile TUSBCoreDeviceRequest *Pointer_Device_Request;
 
 	LOG(USB_CORE_IS_LOGGING_ENABLED, "\033[33m--- Entering USB handler ---\033[0m");
@@ -189,8 +212,6 @@ void USBCoreInterruptHandler(void)
 	// Display low level debugging information
 	#if USB_CORE_IS_LOGGING_ENABLED
 	{
-		volatile unsigned char *Pointer_Endpoint_Register;
-
 		// Display the fired interrupts
 		printf("Status interrupts register : 0x%02X", UIR);
 		if (UIRbits.SOFIF) printf(" SOF");
@@ -228,7 +249,28 @@ void USBCoreInterruptHandler(void)
 	{
 		LOG(USB_CORE_IS_LOGGING_ENABLED, "Detected a Reset condition, starting enumeration process.");
 		UIRbits.URSTIF = 0; // Clear the interrupt flag
-		return;
+		goto Exit;
+	}
+
+	// Re-enable a stalled endpoint upon reception of a stall handshake
+	if (UIRbits.STALLIF)
+	{
+		// Cache the involved endpoint information
+		Endpoint_ID = USTAT >> 3;
+		Is_In_Transfer = USTATbits.DIR; // Determine the transfer direction
+		Pointer_Endpoint_Descriptor = &USB_Core_Endpoint_Descriptors[Endpoint_ID]; // Cache the endpoint access
+
+		// The endpoint stall indication needs to be cleared by software
+		LOG(USB_CORE_IS_LOGGING_ENABLED, "Received the %s endpoint %u stall handshake, clearing the endpoint stall condition.", Is_In_Transfer ? "IN" : "OUT", Endpoint_ID);
+		Pointer_Endpoint_Register = &UEP0 + Endpoint_ID;
+		*Pointer_Endpoint_Register &= 0xFE;
+
+		// Return the IN buffer descriptor to the microcontroller, otherwise it stays owned by the SIE indefinitely
+		Pointer_Endpoint_Descriptor->In_Descriptor.Status = 0;
+
+		// Clear the interrupt flag
+		UIRbits.STALLIF = 0;
+		goto Exit;
 	}
 
 	// Manage data transmission and reception
@@ -295,15 +337,33 @@ void USBCoreInterruptHandler(void)
 
 						case USB_CORE_DEVICE_REQUEST_ID_GET_DESCRIPTOR:
 						{
-							unsigned char Descriptor_Type, Descriptor_Index;
+							TUSBCoreDescriptorType Descriptor_Type;
+							unsigned char Descriptor_Index;
 
 							// Retrieve the request parameters
 							Descriptor_Type = Pointer_Device_Request->wValue >> 8;
 							Descriptor_Index = (unsigned char) Pointer_Device_Request->wValue;
 							LOG(USB_CORE_IS_LOGGING_ENABLED, "Host is asking for %d bytes of the descriptor of type %d and index %d.", Pointer_Device_Request->wLength, Descriptor_Type, Descriptor_Index);
 
-							USBCorePrepareForInTransfer(0, (void *) Pointer_USB_Core_Descriptor_Device, sizeof(TUSBCoreDescriptorDevice), 1);
-							USBCorePrepareForOutTransfer(0, 0); // Re-enable packets reception
+							switch (Descriptor_Type)
+							{
+								case USB_CORE_DESCRIPTOR_TYPE_DEVICE:
+									LOG(USB_CORE_IS_LOGGING_ENABLED, "Selecting the device descriptor.");
+									USBCorePrepareForInTransfer(0, (void *) Pointer_USB_Core_Descriptor_Device, sizeof(TUSBCoreDescriptorDevice), 1);
+									USBCorePrepareForOutTransfer(0, 0); // Re-enable packets reception
+									break;
+
+								case USB_CORE_DESCRIPTOR_TYPE_DEVICE_QUALIFIER:
+									LOG(USB_CORE_IS_LOGGING_ENABLED, "Tell the host that the device qualifier descriptor is not supported.");
+									// Stall the control endpoint to tell that the device does not support high speed (see USB2.0 spec chapter 9.2.7)
+									USBCoreStallEndpoint(0);
+									USBCorePrepareForOutTransfer(0, 0); // Re-enable packets reception
+									break;
+
+								default:
+									LOG(USB_CORE_IS_LOGGING_ENABLED, "Unsupported descriptor type.");
+									break;
+							}
 							break;
 						}
 
@@ -319,6 +379,7 @@ void USBCoreInterruptHandler(void)
 		UIRbits.TRNIF = 0;
 	}
 
+Exit:
 	// Clear the interrupt flag
 	PIR3bits.USBIF = 0;
 }
