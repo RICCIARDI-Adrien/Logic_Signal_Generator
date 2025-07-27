@@ -305,7 +305,7 @@ void USBCoreInterruptHandler(void)
 	LOG(USB_CORE_IS_LOGGING_ENABLED, "\033[33m--- Entering USB handler ---\033[0m");
 
 	// Display low level debugging information
-	#if USB_CORE_IS_LOGGING_ENABLED
+	LOG_BEGIN_SECTION(USB_CORE_IS_LOGGING_ENABLED)
 	{
 		// Display the fired interrupts
 		printf("Status interrupts register : 0x%02X", UIR);
@@ -337,7 +337,7 @@ void USBCoreInterruptHandler(void)
 		Pointer_Endpoint_Register = &UEP0 + Endpoint_ID;
 		if (*Pointer_Endpoint_Register & 0x01) printf("The endpoint is stalled.\r\n");
 	}
-	#endif
+	LOG_END_SECTION()
 
 	// Discard every other event when the device has been reset
 	if (UIRbits.URSTIF)
@@ -383,12 +383,7 @@ void USBCoreInterruptHandler(void)
 		// IN transfer
 		if (Is_In_Transfer)
 		{
-			#if USB_CORE_IS_LOGGING_ENABLED
-				unsigned char Bytes_Count;
-
-				Bytes_Count = Pointer_Endpoint_Descriptor->In_Descriptor.Bytes_Count;
-				LOG(USB_CORE_IS_LOGGING_ENABLED, "Sent a %d-byte packet from endpoint %d.", Bytes_Count, Endpoint_ID);
-			#endif
+			LOG(USB_CORE_IS_LOGGING_ENABLED, "Sent a %u-byte packet from endpoint %u.", Pointer_Endpoint_Descriptor->In_Descriptor.Bytes_Count, Endpoint_ID);
 
 			// Assign the device address only when the ACK of the SET ADDRESS command has been transmitted on the default address 0
 			if (Device_Address != 0)
@@ -401,14 +396,16 @@ void USBCoreInterruptHandler(void)
 		else
 		{
 			// Display the received packet data
-			#if USB_CORE_IS_LOGGING_ENABLED
+			LOG_BEGIN_SECTION(USB_CORE_IS_LOGGING_ENABLED)
+			{
 				unsigned char i, Bytes_Count;
 
 				Bytes_Count = Pointer_Endpoint_Descriptor->Out_Descriptor.Bytes_Count;
-				LOG(USB_CORE_IS_LOGGING_ENABLED, "Received a %d-byte packet on endpoint %d : ", Bytes_Count, Endpoint_ID);
+				LOG(USB_CORE_IS_LOGGING_ENABLED, "Received a %u-byte packet on endpoint %u : ", Bytes_Count, Endpoint_ID);
 				for (i = 0; i < Bytes_Count; i++) printf("0x%02X ", Pointer_Endpoint_Buffer[i]);
 				puts("\r");
-			#endif
+			}
+			LOG_END_SECTION()
 
 			// Manage the standard setup requests (TODO organize better to support other requests)
 			if (Pointer_Endpoint_Descriptor->Out_Descriptor.Status_From_Peripheral.PID == USB_CORE_PACKET_ID_TYPE_SETUP) // Such requests are only addressed to the endpoint 0
