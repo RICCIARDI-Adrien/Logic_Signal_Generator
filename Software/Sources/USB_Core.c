@@ -128,12 +128,6 @@ static inline void USBCoreProcessGetConfigurationDescriptor(unsigned char Config
 	const TUSBCoreDescriptorConfiguration *Pointer_Configuration_Descriptor;
 
 	// Check the correctness of some values
-	// The requested total length
-	if (Length > USB_CORE_ENDPOINT_PACKETS_SIZE)
-	{
-		LOG(USB_CORE_IS_LOGGING_ENABLED, "Error : the requested length %u is greater than the packet size %u, aborting.", Length, USB_CORE_ENDPOINT_PACKETS_SIZE);
-		return;
-	}
 	// There must be at least one configuration
 	Count = Pointer_USB_Core_Device_Descriptor->bNumConfigurations;
 	if (Count == 0)
@@ -145,6 +139,13 @@ static inline void USBCoreProcessGetConfigurationDescriptor(unsigned char Config
 	{
 		LOG(USB_CORE_IS_LOGGING_ENABLED, "Error : an out-of-bounds configuration index %u has been requested (the device descriptor has %u configurations), aborting.", Configuration_Index, Count);
 		return;
+	}
+
+	// Clamp the requested total length to the one of a packet
+	if (Length > USB_CORE_ENDPOINT_PACKETS_SIZE)
+	{
+		LOG(USB_CORE_IS_LOGGING_ENABLED, "Limiting the requested size of %u bytes to the maximum configured %u bytes.", Length, USB_CORE_ENDPOINT_PACKETS_SIZE);
+		Length = USB_CORE_ENDPOINT_PACKETS_SIZE;
 	}
 
 	// Find the requested configuration
