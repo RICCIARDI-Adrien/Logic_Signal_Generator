@@ -21,4 +21,14 @@
 	#define LOG(Is_Enabled, Format, ...) do {} while (0)
 #endif
 
+/** Discard the code surrounded by LOG_BEGIN_SECTION() and LOG_END_SECTION() if the logs are disabled.
+ * @param Is_Enabled If set to 0, the code is also discarded when the logs are enabled (this is useful to enable or disable a specific module logs).
+ */
+#ifdef LOG_ENABLE_LOGGING
+	#define LOG_BEGIN_SECTION(Is_Enabled) if (Is_Enabled) {
+#else
+	#define LOG_BEGIN_SECTION(Is_Enabled) if (0) {
+#endif
+/** End a code section opened with LOG_BEGIN_SECTION(). */
+#define LOG_END_SECTION() }
 #endif
