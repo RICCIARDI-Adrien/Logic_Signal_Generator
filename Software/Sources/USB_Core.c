@@ -71,7 +71,8 @@ typedef struct
 typedef enum : unsigned char
 {
 	USB_CORE_DEVICE_REQUEST_ID_SET_ADDRESS = 5,
-	USB_CORE_DEVICE_REQUEST_ID_GET_DESCRIPTOR = 6
+	USB_CORE_DEVICE_REQUEST_ID_GET_DESCRIPTOR = 6,
+	USB_CORE_DEVICE_REQUEST_ID_SET_CONFIGURATION = 9
 } TUSBCoreDeviceRequestID;
 
 /** The standard format a an USB device request. */
@@ -471,6 +472,13 @@ void USBCoreInterruptHandler(void)
 							break;
 						}
 
+						case USB_CORE_DEVICE_REQUEST_ID_SET_CONFIGURATION:
+						{
+							LOG(USB_CORE_IS_LOGGING_ENABLED, "The host is setting the configuration with value %u (note that only the first configuration is supported for now).", (unsigned char) (Pointer_Device_Request->wValue >> 8));
+							USBCorePrepareForInTransfer(0, NULL, 0, 1); // Send back an empty packet to acknowledge the configuration setting
+							USBCorePrepareForOutTransfer(0, 0); // Re-enable packets reception
+							break;
+						}
 					}
 
 					// When a setup transfer is received, the SIE disables packets processing, so re-enable it now
