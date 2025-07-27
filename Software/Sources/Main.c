@@ -38,6 +38,35 @@
 //-------------------------------------------------------------------------------------------------
 // Private variables
 //-------------------------------------------------------------------------------------------------
+/** All application USB strings. */
+static const unsigned short Main_USB_Descriptor_String_Data_0 = USB_CORE_LANGUAGE_ID_FRENCH_STANDARD;
+static const unsigned short Main_USB_Descriptor_String_Data_Manufacturer[] = { 'R', 'I', 'C', 'C', 'I', 'A', 'R', 'D', 'I', ' ', 'D', 'A', 'T', 'A', ' ', 'S', 'Y', 'S', 'T', 'E', 'M' };
+static const unsigned short Main_USB_Descriptor_String_Data_Product[] = { 'L', 'o', 'g', 'i', 'c', ' ', 'S', 'i', 'g', 'n', 'a', 'l', ' ', 'G', 'e', 'n', 'e', 'r', 'a', 't', 'o', 'r' };
+static const unsigned short Main_USB_Descriptor_String_Data_Serial_Number[]  = { '0', '.', '1' };
+static const TUSBCoreDescriptorString Main_USB_String_Descriptors[4] =
+{
+	{
+		.bLength = USB_CORE_DESCRIPTOR_SIZE_STRING(sizeof(Main_USB_Descriptor_String_Data_0)),
+		.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_STRING,
+		.Pointer_Data = &Main_USB_Descriptor_String_Data_0
+	},
+	{
+		.bLength = USB_CORE_DESCRIPTOR_SIZE_STRING(sizeof(Main_USB_Descriptor_String_Data_Manufacturer)),
+		.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_STRING,
+		.Pointer_Data = &Main_USB_Descriptor_String_Data_Manufacturer
+	},
+	{
+		.bLength = USB_CORE_DESCRIPTOR_SIZE_STRING(sizeof(Main_USB_Descriptor_String_Data_Product)),
+		.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_STRING,
+		.Pointer_Data = &Main_USB_Descriptor_String_Data_Product
+	},
+	{
+		.bLength = USB_CORE_DESCRIPTOR_SIZE_STRING(sizeof(Main_USB_Descriptor_String_Data_Serial_Number)),
+		.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_STRING,
+		.Pointer_Data = &Main_USB_Descriptor_String_Data_Serial_Number
+	}
+};
+
 /** The application interface descriptors. */
 static const TUSBCoreDescriptorInterface Main_USB_Interfaces_Descriptors_First_Configuration[3] =
 {
@@ -113,7 +142,7 @@ static const TUSBCoreDescriptorConfiguration Main_USB_Configuration_Descriptors[
 		.iConfiguration = 0,
 		.bmAttributes = 0, // The device is not self-powered and does not support the remove wakeup feature
 		.bMaxPower = 255, // Take as much power as possible, just in case the logic signal generator needs to power a board
-		.Pointer_Interfaces = Main_USB_Interfaces_Descriptors_Second_Configuration
+		.Pointer_Interfaces = Main_USB_Interfaces_Descriptors_First_Configuration
 	},
 	{
 		.bLength = USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION,
@@ -145,7 +174,9 @@ static const TUSBCoreDescriptorDevice Main_USB_Device_Descriptor = // Store this
 	.iProduct = 2,
 	.iSerialNumber = 3,
 	.bNumConfigurations = 2,
-	.Pointer_Configurations = Main_USB_Configuration_Descriptors
+	.Pointer_Configurations = Main_USB_Configuration_Descriptors,
+	.Pointer_Strings = Main_USB_String_Descriptors,
+	.String_Descriptors_Count = sizeof(Main_USB_String_Descriptors) / sizeof(TUSBCoreDescriptorString)
 };
 
 //-------------------------------------------------------------------------------------------------

@@ -23,6 +23,10 @@
 #define USB_CORE_DESCRIPTOR_SIZE_DEVICE 18
 /** The size in bytes of the configuration descriptor. */
 #define USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION 9
+/** The size in bytes of a string descriptor.
+ * @param Data_Size The size in bytes of the data.
+ */
+#define USB_CORE_DESCRIPTOR_SIZE_STRING(Data_Size) (2 + Data_Size)
 /** The size in bytes of the interface descriptor. */
 #define USB_CORE_DESCRIPTOR_SIZE_INTERFACE 9
 
@@ -57,6 +61,21 @@ typedef enum : unsigned char
 {
 	USB_CORE_DEVICE_PROTOCOL_NONE = 0 //!< No device class-specific protocol is used.
 } TUSBCoreDeviceProtocol;
+
+/** Some language identifier codes. See the USB document named "Language Identifiers (LANGIDs)". */
+typedef enum : unsigned short
+{
+	USB_CORE_LANGUAGE_ID_ENGLISH_UNITED_STATES = 0x0409,
+	USB_CORE_LANGUAGE_ID_FRENCH_STANDARD = 0x040C
+} TUSBCoreLanguageID;
+
+/** An USB string descriptor using the USB naming for simplicity. See the USB specifications 2.0 table 9.6.7. */
+typedef struct
+{
+	unsigned char bLength;
+	TUSBCoreDescriptorType bDescriptorType;
+	const void *Pointer_Data; //!< This field is not part of the USB specification.
+} __attribute__((packed)) TUSBCoreDescriptorString;
 
 /** An USB interface descriptor using the USB naming for simplicity. See the USB specifications 2.0 table 9.12. */
 typedef struct
@@ -104,6 +123,8 @@ typedef struct
 	unsigned char iSerialNumber;
 	unsigned char bNumConfigurations;
 	const TUSBCoreDescriptorConfiguration *Pointer_Configurations; //!< This field is not part of the USB specification.
+	const TUSBCoreDescriptorString *Pointer_Strings; //!< This field is not part of the USB specification.
+	unsigned char String_Descriptors_Count; //!< This field is not part of the USB specification.
 } __attribute__((packed)) TUSBCoreDescriptorDevice;
 
 //-------------------------------------------------------------------------------------------------

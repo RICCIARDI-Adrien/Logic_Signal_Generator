@@ -93,6 +93,7 @@ static volatile TUSBCoreEndpointBufferDescriptor USB_Core_Endpoint_Descriptors[3
 /** Reserve the space for the USB buffers (TODO this is hardcoded for now). */
 static volatile unsigned char USB_Core_Buffers[128] __at(0x500);
 
+/** Allow a direct access to the device descriptor everywhere in the module. */
 static const TUSBCoreDescriptorDevice *Pointer_USB_Core_Device_Descriptor;
 
 //-------------------------------------------------------------------------------------------------
@@ -121,8 +122,7 @@ static void USBCoreStallEndpoint(unsigned char Endpoint_ID)
  */
 static inline void USBCoreProcessGetConfigurationDescriptor(unsigned char Configuration_Index, unsigned char Length)
 {
-	// Cache the control descriptor buffer address
-	volatile unsigned char *Pointer_Endpoint_Descriptor_Buffer = USB_Core_Endpoint_Descriptors[0].In_Descriptor.Pointer_Address;
+	volatile unsigned char *Pointer_Endpoint_Descriptor_Buffer = USB_Core_Endpoint_Descriptors[0].In_Descriptor.Pointer_Address; // Cache the control descriptor buffer address
 	unsigned char Count, i;
 	const TUSBCoreDescriptorConfiguration *Pointer_Configuration_Descriptor;
 
@@ -167,6 +167,44 @@ static inline void USBCoreProcessGetConfigurationDescriptor(unsigned char Config
 			Pointer_Endpoint_Descriptor_Buffer += USB_CORE_DESCRIPTOR_SIZE_INTERFACE;
 		}
 	}
+
+	USBCorePrepareForInTransfer(0, NULL, Length, 1);
+}
+
+/** Send to the host the expected amount of string data. This function takes care of preparing the appropriate control pipe IN transfer.
+ * @param String_Index The string to obtain information from.
+ * @param Length The amount of string bytes requested by the host.
+ */
+static inline void USBCoreProcessGetStringDescriptor(unsigned char String_Index, unsigned char Length)
+{
+	const unsigned char STRING_DESCRIPTOR_HEADER_SIZE = 2;
+	volatile unsigned char *Pointer_Endpoint_Descriptor_Buffer = USB_Core_Endpoint_Descriptors[0].In_Descriptor.Pointer_Address; // Cache the control descriptor buffer address
+	const TUSBCoreDescriptorString *Pointer_String_Descriptor;
+
+	// Is this string descriptor existing ?
+	if (String_Index >= Pointer_USB_Core_Device_Descriptor->String_Descriptors_Count) // TODO compute the amount of strings in the whole descriptors and do more secure checks
+	{
+		LOG(USB_CORE_IS_LOGGING_ENABLED, "Error : an out-of-bounds string index %u has been requested (the device descriptor has %u string descriptors), aborting.", String_Index, Pointer_USB_Core_Device_Descriptor->String_Descriptors_Count);
+		return;
+	}
+
+	// Clamp the requested total length to the one of a packet
+	if (Length > USB_CORE_ENDPOINT_PACKETS_SIZE)
+	{
+		LOG(USB_CORE_IS_LOGGING_ENABLED, "Limiting the requested size of %u bytes to the maximum configured %u bytes.", Length, USB_CORE_ENDPOINT_PACKETS_SIZE);
+		Length = USB_CORE_ENDPOINT_PACKETS_SIZE;
+	}
+
+	// Cache access to the string descriptor
+	Pointer_String_Descriptor = &Pointer_USB_Core_Device_Descriptor->Pointer_Strings[String_Index];
+	if (Pointer_String_Descriptor->bLength < Length) Length = Pointer_String_Descriptor->bLength; // Clamp the size to the descriptor one, otherwise use the size asked by the host
+	LOG(USB_CORE_IS_LOGGING_ENABLED, "Selecting the string descriptor %u of size %u bytes (transmitting %u bytes).", String_Index, Pointer_String_Descriptor->bLength, Length);
+
+	// Start with the "header" of the descriptor
+	memcpy((void *) Pointer_Endpoint_Descriptor_Buffer, Pointer_String_Descriptor, STRING_DESCRIPTOR_HEADER_SIZE);
+	Pointer_Endpoint_Descriptor_Buffer += STRING_DESCRIPTOR_HEADER_SIZE;
+	// Append the string data
+	memcpy((void *) Pointer_Endpoint_Descriptor_Buffer, Pointer_String_Descriptor->Pointer_Data, Length - STRING_DESCRIPTOR_HEADER_SIZE);
 
 	USBCorePrepareForInTransfer(0, NULL, Length, 1);
 }
@@ -399,12 +437,17 @@ void USBCoreInterruptHandler(void)
 							// Retrieve the request parameters
 							Descriptor_Type = Pointer_Device_Request->wValue >> 8;
 							Descriptor_Index = (unsigned char) Pointer_Device_Request->wValue;
-							LOG(USB_CORE_IS_LOGGING_ENABLED, "Host is asking for %d bytes of the descriptor of type %d and index %d.", Pointer_Device_Request->wLength, Descriptor_Type, Descriptor_Index);
+							LOG(USB_CORE_IS_LOGGING_ENABLED, "Host is asking for %u bytes of the descriptor of type %u and index %u.", Pointer_Device_Request->wLength, Descriptor_Type, Descriptor_Index);
 
 							switch (Descriptor_Type)
 							{
 								case USB_CORE_DESCRIPTOR_TYPE_CONFIGURATION:
 									USBCoreProcessGetConfigurationDescriptor(Descriptor_Index, (unsigned char) Pointer_Device_Request->wLength);
+									USBCorePrepareForOutTransfer(0, 0); // Re-enable packets reception
+									break;
+
+								case USB_CORE_DESCRIPTOR_TYPE_STRING:
+									USBCoreProcessGetStringDescriptor(Descriptor_Index, (unsigned char) Pointer_Device_Request->wLength);
 									USBCorePrepareForOutTransfer(0, 0); // Re-enable packets reception
 									break;
 
