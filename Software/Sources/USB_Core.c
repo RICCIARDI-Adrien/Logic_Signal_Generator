@@ -472,7 +472,7 @@ void USBCoreInterruptHandler(void)
 
 						case USB_CORE_DEVICE_REQUEST_ID_SET_CONFIGURATION:
 						{
-							LOG(USB_CORE_IS_LOGGING_ENABLED, "The host is setting the configuration with value %u (note that only the first configuration is supported for now).", (unsigned char) (Pointer_Device_Request->wValue >> 8));
+							LOG(USB_CORE_IS_LOGGING_ENABLED, "The host is setting the configuration with value %u (note that only the first configuration is supported for now).", (unsigned char) Pointer_Device_Request->wValue);
 							USBCorePrepareForInTransfer(0, NULL, 0, 1); // Send back an empty packet to acknowledge the configuration setting
 							USBCorePrepareForOutTransfer(0, 0); // Re-enable packets reception
 							break;
