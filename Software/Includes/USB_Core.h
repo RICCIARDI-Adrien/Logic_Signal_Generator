@@ -53,6 +53,25 @@
 /** Enabled the IN endpoint of the hardware endpoint. */
 #define USB_CORE_HARDWARE_ENDPOINT_DIRECTION_IN 0x02
 
+/** Copy data from a buffer to another, keeping the volatile qualifier and forcing the inlining.
+ * @param Pointer_Destination_Buffer Where to store the copied data.
+ * @param Pointer_Source_Buffer The data to copy from.
+ * @param Bytes_Count How many bytes to copy.
+ */
+#define USB_CORE_MEMCPY(Pointer_Destination_Buffer, Pointer_Source_Buffer, Bytes_Count) \
+{ \
+	unsigned char i = (Bytes_Count); \
+	volatile unsigned char *Pointer_Destination_Buffer_Bytes = (volatile unsigned char *) Pointer_Destination_Buffer; \
+	volatile unsigned char *Pointer_Source_Buffer_Bytes = (volatile unsigned char *) Pointer_Source_Buffer; \
+	while (i > 0) \
+	{ \
+		*Pointer_Destination_Buffer_Bytes = *Pointer_Source_Buffer_Bytes; \
+		Pointer_Destination_Buffer_Bytes++; \
+		Pointer_Source_Buffer_Bytes++; \
+		i--; \
+	} \
+}
+
 //-------------------------------------------------------------------------------------------------
 // Types
 //-------------------------------------------------------------------------------------------------

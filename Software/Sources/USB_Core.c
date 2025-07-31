@@ -3,7 +3,6 @@
  * @author Adrien RICCIARDI
  */
 #include <Log.h>
-#include <string.h>
 #include <USB_Core.h>
 #include <xc.h>
 
@@ -153,7 +152,7 @@ static inline void USBCoreProcessGetConfigurationDescriptor(unsigned char Config
 	LOG(USB_CORE_IS_LOGGING_ENABLED, "Found the configuration descriptor %u.", Configuration_Index);
 
 	// Always start from the configuration descriptor itself
-	memcpy((void *) Pointer_Endpoint_Descriptor_Buffer, Pointer_Configuration_Descriptor, USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION);
+	USB_CORE_MEMCPY(Pointer_Endpoint_Descriptor_Buffer, Pointer_Configuration_Descriptor, USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION);
 
 	// Append the interfaces if asked to
 	if (Length > USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION)
@@ -169,7 +168,7 @@ static inline void USBCoreProcessGetConfigurationDescriptor(unsigned char Config
 		}
 
 		// Append all interface descriptors
-		memcpy((void *) Pointer_Endpoint_Descriptor_Buffer, Pointer_Configuration_Descriptor->Pointer_Interfaces_Data, Length - USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION);
+		USB_CORE_MEMCPY(Pointer_Endpoint_Descriptor_Buffer, Pointer_Configuration_Descriptor->Pointer_Interfaces_Data, Length - USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION);
 	}
 
 	USBCorePrepareForInTransfer(0, NULL, Length, 1);
@@ -205,10 +204,10 @@ static inline void USBCoreProcessGetStringDescriptor(unsigned char String_Index,
 	LOG(USB_CORE_IS_LOGGING_ENABLED, "Selecting the string descriptor %u of size %u bytes (transmitting %u bytes).", String_Index, Pointer_String_Descriptor->bLength, Length);
 
 	// Start with the "header" of the descriptor
-	memcpy((void *) Pointer_Endpoint_Descriptor_Buffer, Pointer_String_Descriptor, STRING_DESCRIPTOR_HEADER_SIZE);
+	USB_CORE_MEMCPY(Pointer_Endpoint_Descriptor_Buffer, Pointer_String_Descriptor, STRING_DESCRIPTOR_HEADER_SIZE);
 	Pointer_Endpoint_Descriptor_Buffer += STRING_DESCRIPTOR_HEADER_SIZE;
 	// Append the string data
-	memcpy((void *) Pointer_Endpoint_Descriptor_Buffer, Pointer_String_Descriptor->Pointer_Data, Length - STRING_DESCRIPTOR_HEADER_SIZE);
+	USB_CORE_MEMCPY(Pointer_Endpoint_Descriptor_Buffer, Pointer_String_Descriptor->Pointer_Data, Length - STRING_DESCRIPTOR_HEADER_SIZE);
 
 	USBCorePrepareForInTransfer(0, NULL, Length, 1);
 }
@@ -313,7 +312,7 @@ void USBCorePrepareForInTransfer(unsigned char Endpoint_ID, void *Pointer_Data, 
 	while (Pointer_Endpoint_Descriptor->In_Descriptor.Status_From_Peripheral.Is_Owned_By_Peripheral);
 
 	// Copy the data to the USB RAM
-	if (Pointer_Data != NULL) memcpy((void *) Pointer_Endpoint_Descriptor->In_Descriptor.Pointer_Address, Pointer_Data, Data_Size);
+	if (Pointer_Data != NULL) USB_CORE_MEMCPY(Pointer_Endpoint_Descriptor->In_Descriptor.Pointer_Address, Pointer_Data, Data_Size);
 	Pointer_Endpoint_Descriptor->In_Descriptor.Bytes_Count = Data_Size;
 
 	// Configure the transfer settings
