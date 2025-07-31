@@ -145,8 +145,6 @@ typedef struct
 {
 	unsigned char Enabled_Directions; //!< Configure the IN and/or the OUT endpoints.
 	TUSBCoreHardwareEndpointOUTCallback Out_Transfert_Callback; //!< Called when a non-SETUP OUT transfert is received.
-	volatile unsigned char *Pointer_Data_Buffer_OUT; //!< Reserved for internal use.
-	volatile unsigned char *Pointer_Data_Buffer_IN; //!< Reserved for internal use.
 } TUSBCoreHardwareEndpointConfiguration;
 
 /** An USB string descriptor using the USB naming for simplicity. See the USB specifications 2.0 table 9.6.7. */

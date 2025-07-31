@@ -249,10 +249,8 @@ void USBCoreInitialize(const TUSBCoreDescriptorDevice *Pointer_Device_Descriptor
 	{
 		// Assign the data buffers
 		Pointer_Endpoint_Descriptor->Out_Descriptor.Pointer_Address = Pointer_Endpoint_Data_Buffer;
-		//Pointer_Endpoint_Hardware_Configuration->Pointer_Data_Buffer_OUT = Pointer_Endpoint_Data_Buffer;
 		Pointer_Endpoint_Data_Buffer += USB_CORE_ENDPOINT_PACKETS_SIZE;
 		Pointer_Endpoint_Descriptor->In_Descriptor.Pointer_Address = Pointer_Endpoint_Data_Buffer;
-		//Pointer_Endpoint_Hardware_Configuration->Pointer_Data_Buffer_IN = Pointer_Endpoint_Data_Buffer;
 		Pointer_Endpoint_Data_Buffer += USB_CORE_ENDPOINT_PACKETS_SIZE;
 
 		// Make sure all endpoints belong to the MCU before booting
@@ -508,6 +506,12 @@ void USBCoreInterruptHandler(void)
 
 					// When a setup transfer is received, the SIE disables packets processing, so re-enable it now
 					UCONbits.PKTDIS = 0;
+				}
+				// This is a class or vendor request, forward it to the class handler
+				else
+				{
+					if ((Pointer_Device_Request->bmRequestType & USB_CORE_DEVICE_REQUEST_TYPE_MASK_TYPE) == USB_CORE_DEVICE_REQUEST_TYPE_VALUE_TYPE_CLASS) LOG(USB_CORE_IS_LOGGING_ENABLED, "Decoded as a class request, calling the corresponding callback.");
+					Pointer_USB_Core_Device_Descriptor->Pointer_Hardware_Endpoints_Configuration[Endpoint_ID].Out_Transfert_Callback(Pointer_Endpoint_Buffer, Pointer_Endpoint_Descriptor->Out_Descriptor.Bytes_Count);
 				}
 			}
 		}
