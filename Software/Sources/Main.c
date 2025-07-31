@@ -141,7 +141,7 @@ static const TUSBCoreDescriptorConfiguration Main_USB_Configuration_Descriptors[
 		.bConfigurationValue = 1,
 		.iConfiguration = 0,
 		.bmAttributes = 0, // The device is not self-powered and does not support the remove wakeup feature
-		.bMaxPower = 255, // Take as much power as possible, just in case the logic signal generator needs to power a board
+		.bMaxPower = 250, // Take as much power as possible, just in case the logic signal generator needs to power a board
 		.Pointer_Interfaces = Main_USB_Interfaces_Descriptors_First_Configuration
 	},
 	{
