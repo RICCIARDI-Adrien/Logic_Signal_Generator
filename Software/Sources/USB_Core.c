@@ -91,8 +91,8 @@ typedef struct
 /** Reserve the space for all possible buffer descriptors, even if they are not used (TODO this is hardcoded for now). */
 static volatile TUSBCoreEndpointBufferDescriptor USB_Core_Endpoint_Descriptors[32] __at(0x400);
 
-/** Reserve the space for the USB buffers (TODO this is hardcoded for now). */
-static volatile unsigned char USB_Core_Buffers[128] __at(0x500);
+/** Reserve the space for the USB buffers. */
+static volatile unsigned char USB_Core_Buffers[USB_CORE_HARDWARE_ENDPOINTS_COUNT * USB_CORE_ENDPOINT_PACKETS_SIZE] __at(0x500);
 
 /** Allow a direct access to the device descriptor everywhere in the module. */
 static const TUSBCoreDescriptorDevice *Pointer_USB_Core_Device_Descriptor;
@@ -218,7 +218,19 @@ static inline void USBCoreProcessGetStringDescriptor(unsigned char String_Index,
 //-------------------------------------------------------------------------------------------------
 void USBCoreInitialize(const TUSBCoreDescriptorDevice *Pointer_Device_Descriptor)
 {
-	unsigned char i, Endpoints_Count = 1; // Will always be 1 or more because of the mandatory control endpoint
+	volatile TUSBCoreEndpointBufferDescriptor *Pointer_Endpoint_Descriptor;
+	unsigned char i, Endpoints_Count;
+	volatile unsigned char *Pointer_Endpoint_Data_Buffer, *Pointer_Endpoint_Register;
+	TUSBCoreHardwareEndpointConfiguration *Pointer_Endpoint_Hardware_Configuration;
+
+	// Make sure there are enough alloted hardware endpoints
+	Endpoints_Count = Pointer_Device_Descriptor->Hardware_Endpoints_Count;
+	if (Endpoints_Count > USB_CORE_HARDWARE_ENDPOINTS_COUNT)
+	{
+		LOG(USB_CORE_IS_LOGGING_ENABLED, "Error : %u hardware endpoints are configured while only %u have been enabled (see USB_CORE_HARDWARE_ENDPOINTS_COUNT).", Endpoints_Count, USB_CORE_HARDWARE_ENDPOINTS_COUNT);
+		return;
+	}
+	LOG(USB_CORE_IS_LOGGING_ENABLED, "There are %u hardware endpoints to configure.", Endpoints_Count);
 
 	// Disable eye test pattern, disable the USB OE monitoring signal, enable the on-chip pull-up, select the full-speed device mode, TODO for now disable ping-pong buffers, this will be a further optimization
 	UCFG = 0x14;
@@ -229,22 +241,36 @@ void USBCoreInitialize(const TUSBCoreDescriptorDevice *Pointer_Device_Descriptor
 	// Keep access to the various USB descriptors
 	Pointer_USB_Core_Device_Descriptor = Pointer_Device_Descriptor;
 
-	// TODO configure the buffer descriptors
-	USB_Core_Endpoint_Descriptors[0].Out_Descriptor.Pointer_Address = USB_Core_Buffers;
-	USB_Core_Endpoint_Descriptors[0].In_Descriptor.Pointer_Address = USB_Core_Buffers + 64;
-
-	// Make sure all endpoints belong to the MCU before booting
+	// Configure the buffer descriptors
+	Pointer_Endpoint_Descriptor = USB_Core_Endpoint_Descriptors;
+	Pointer_Endpoint_Data_Buffer = USB_Core_Buffers;
+	Pointer_Endpoint_Hardware_Configuration = Pointer_USB_Core_Device_Descriptor->Pointer_Hardware_Endpoints_Configuration;
+	Pointer_Endpoint_Register = &UEP0;
 	for (i = 0; i < Endpoints_Count; i++)
 	{
-		USB_Core_Endpoint_Descriptors[i].Out_Descriptor.Status = 0;
-		USB_Core_Endpoint_Descriptors[i].In_Descriptor.Status = 0;
+		// Assign the data buffers
+		Pointer_Endpoint_Descriptor->Out_Descriptor.Pointer_Address = Pointer_Endpoint_Data_Buffer;
+		//Pointer_Endpoint_Hardware_Configuration->Pointer_Data_Buffer_OUT = Pointer_Endpoint_Data_Buffer;
+		Pointer_Endpoint_Data_Buffer += USB_CORE_ENDPOINT_PACKETS_SIZE;
+		Pointer_Endpoint_Descriptor->In_Descriptor.Pointer_Address = Pointer_Endpoint_Data_Buffer;
+		//Pointer_Endpoint_Hardware_Configuration->Pointer_Data_Buffer_IN = Pointer_Endpoint_Data_Buffer;
+		Pointer_Endpoint_Data_Buffer += USB_CORE_ENDPOINT_PACKETS_SIZE;
+
+		// Make sure all endpoints belong to the MCU before booting
+		Pointer_Endpoint_Descriptor->Out_Descriptor.Status = 0;
+		Pointer_Endpoint_Descriptor->In_Descriptor.Status = 0;
+
+		// Configure the hardware endpoint
+		*Pointer_Endpoint_Register = 0x18 | Pointer_Endpoint_Hardware_Configuration->Enabled_Directions; // Enable endpoint handshake, disable control transfers
+
+		Pointer_Endpoint_Descriptor++;
+		Pointer_Endpoint_Hardware_Configuration++;
 	}
+	// Ensure that the endpoint 0, used as the control endpoint, is always correctly configured
+	UEP0 = 0x16; // Enable endpoint handshake, allow control transfers, enable the endpoint OUT and IN directions
 
 	// Make sure that the control endpoint can receive a packet
 	USBCorePrepareForOutTransfer(0, 0);
-
-	// Always enable the endpoint 0, used as the control endpoint
-	UEP0 = 0x16; // Enable endpoint handshake, allow control transfers, enabled endpoint input and output
 
 	// Configure the interrupts
 	PIE3bits.USBIE = 1; // Enable the USB peripheral global interrupt

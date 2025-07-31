@@ -176,6 +176,31 @@ static const TUSBCoreDescriptorConfiguration Main_USB_Configuration_Descriptor =
 	.Pointer_Interfaces_Data = &Main_USB_Communications_Class_Specific_Endpoint_Descriptors
 };
 
+/** Each used hardware USB endpoint configuration. */
+static TUSBCoreHardwareEndpointConfiguration Main_USB_Hardware_Endpoints_Configuration[] =
+{
+	// Control endpoint
+	{
+		.Enabled_Directions = USB_CORE_HARDWARE_ENDPOINT_DIRECTION_OUT | USB_CORE_HARDWARE_ENDPOINT_DIRECTION_IN,
+		.Out_Transfert_Callback = NULL, // TEST
+	},
+	// CDC ACM notification
+	{
+		.Enabled_Directions = USB_CORE_HARDWARE_ENDPOINT_DIRECTION_IN,
+		.Out_Transfert_Callback = NULL, // TEST
+	},
+	// CDC ACM data OUT
+	{
+		.Enabled_Directions = USB_CORE_HARDWARE_ENDPOINT_DIRECTION_OUT,
+		.Out_Transfert_Callback = NULL, // TEST
+	},
+	// CDC ACM data IN
+	{
+		.Enabled_Directions = USB_CORE_HARDWARE_ENDPOINT_DIRECTION_IN,
+		.Out_Transfert_Callback = NULL, // TEST
+	}
+};
+
 /** The application USB device descriptor, see chapter 5.1.1 of the Class Definitions for Communications Devices revision 1.2. */
 static const TUSBCoreDescriptorDevice Main_USB_Device_Descriptor = // Store this into the program memory to save some RAM
 {
@@ -195,7 +220,9 @@ static const TUSBCoreDescriptorDevice Main_USB_Device_Descriptor = // Store this
 	.bNumConfigurations = 1,
 	.Pointer_Configurations = &Main_USB_Configuration_Descriptor,
 	.Pointer_Strings = Main_USB_String_Descriptors,
-	.String_Descriptors_Count = USB_CORE_ARRAY_SIZE(Main_USB_String_Descriptors)
+	.String_Descriptors_Count = USB_CORE_ARRAY_SIZE(Main_USB_String_Descriptors),
+	.Pointer_Hardware_Endpoints_Configuration = Main_USB_Hardware_Endpoints_Configuration,
+	.Hardware_Endpoints_Count = USB_CORE_ARRAY_SIZE(Main_USB_Hardware_Endpoints_Configuration)
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -230,7 +257,7 @@ void main(void)
 
 	LOG(1, "\033[33mInitialization complete.\033[0m");
 
-	// TEST
+	// Initialize the modules
 	USBCoreInitialize(&Main_USB_Device_Descriptor);
 
 	// TEST
