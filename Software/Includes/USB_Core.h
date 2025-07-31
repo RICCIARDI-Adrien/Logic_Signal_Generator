@@ -35,6 +35,16 @@
  */
 #define USB_CORE_ARRAY_SIZE(Array) (sizeof(Array) / (sizeof(Array[0])))
 
+/** The endpoint descriptor bmAttributes Transfer Type field value for an OUT direction. */
+#define USB_CORE_DESCRIPTOR_ENDPOINT_ATTRIBUTE_ENDPOINT_ADDRESS_DIRECTION_OUT 0
+/** The endpoint descriptor bmAttributes Transfer Type field value for an IN direction. */
+#define USB_CORE_DESCRIPTOR_ENDPOINT_ATTRIBUTE_ENDPOINT_ADDRESS_DIRECTION_IN 0x80
+
+/** The endpoint descriptor bmAttributes Transfer Type field value for Bulk. */
+#define USB_CORE_DESCRIPTOR_ENDPOINT_ATTRIBUTE_TRANSFER_TYPE_BULK 2
+/** The endpoint descriptor bmAttributes Transfer Type field value for Interrupt. */
+#define USB_CORE_DESCRIPTOR_ENDPOINT_ATTRIBUTE_TRANSFER_TYPE_INTERRUPT 3
+
 //-------------------------------------------------------------------------------------------------
 // Types
 //-------------------------------------------------------------------------------------------------
@@ -49,6 +59,7 @@ typedef enum : unsigned char
 	USB_CORE_DESCRIPTOR_TYPE_DEVICE_QUALIFIER = 6
 } TUSBCoreDescriptorType;
 
+// Device descriptor
 /** The supported device class codes. */
 typedef enum : unsigned char
 {
@@ -67,6 +78,28 @@ typedef enum : unsigned char
 	USB_CORE_DEVICE_PROTOCOL_CODE_NONE = 0 //!< No device class-specific protocol is used.
 } TUSBCoreDeviceProtocolCode;
 
+// Interface descriptor
+/** The supported interface class codes. */
+typedef enum : unsigned char
+{
+	USB_CORE_INTERFACE_CLASS_CODE_COMMUNICATIONS = 2,
+	USB_CORE_INTERFACE_CLASS_CODE_DATA_INTERFACE = 0x0A
+} TUSBCoreInterfaceClassCode;
+
+/** The supported interface sub class codes. */
+typedef enum : unsigned char
+{
+	USB_CORE_INTERFACE_SUB_CLASS_CODE_NONE = 0,
+	USB_CORE_INTERFACE_SUB_CLASS_CODE_ABSTRACT_CONTROL_MODEL = 2 //!< ACM.
+} TUSBCoreInterfaceSubClassCode;
+
+/** The supported interface protocol codes. */
+typedef enum : unsigned char
+{
+	USB_CORE_INTERFACE_PROTOCOL_CODE_NONE = 0,
+	USB_CORE_INTERFACE_PROTOCOL_CODE_ITU_V250 = 1
+} TUSBCoreInterfaceProtocolCode;
+
 /** Some language identifier codes. See the USB document named "Language Identifiers (LANGIDs)". */
 typedef enum : unsigned short
 {
@@ -82,6 +115,17 @@ typedef struct
 	const void *Pointer_Data; //!< This field is not part of the USB specification.
 } __attribute__((packed)) TUSBCoreDescriptorString;
 
+/** An USB endpoint descriptor using the USB naming for simplicity. See the USB specifications 2.0 table 9.13. */
+typedef struct
+{
+	unsigned char bLength;
+	TUSBCoreDescriptorType bDescriptorType;
+	unsigned char bEndpointAddress;
+	unsigned char bmAttributes;
+	unsigned short wMaxPacketSize;
+	unsigned char bInterval;
+} __attribute__((packed)) TUSBCoreDescriptorEndpoint;
+
 /** An USB interface descriptor using the USB naming for simplicity. See the USB specifications 2.0 table 9.12. */
 typedef struct
 {
@@ -90,9 +134,9 @@ typedef struct
 	unsigned char bInterfaceNumber;
 	unsigned char bAlternateSetting;
 	unsigned char bNumEndpoints; //!< The endpoint 0, if used, is excluded from this value.
-	unsigned char bInterfaceClass;
-	unsigned char bInterfaceSubClass;
-	unsigned char bInterfaceProtocol;
+	TUSBCoreInterfaceClassCode bInterfaceClass;
+	TUSBCoreInterfaceSubClassCode bInterfaceSubClass;
+	TUSBCoreInterfaceProtocolCode bInterfaceProtocol;
 	unsigned char iInterface;
 } __attribute__((packed)) TUSBCoreDescriptorInterface;
 
@@ -107,7 +151,7 @@ typedef struct
 	unsigned char iConfiguration;
 	unsigned char bmAttributes;
 	unsigned char bMaxPower; //!< Expressed in 2mA units.
-	const TUSBCoreDescriptorInterface *Pointer_Interfaces; //!< This field is not part of the USB specification.
+	const void *Pointer_Interfaces_Data; //!< This field is not part of the USB specification.
 } __attribute__((packed)) TUSBCoreDescriptorConfiguration;
 
 /** An USB device descriptor, using the USB naming for simplicity. */

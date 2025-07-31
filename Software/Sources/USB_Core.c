@@ -124,7 +124,7 @@ static void USBCoreStallEndpoint(unsigned char Endpoint_ID)
 static inline void USBCoreProcessGetConfigurationDescriptor(unsigned char Configuration_Index, unsigned char Length)
 {
 	volatile unsigned char *Pointer_Endpoint_Descriptor_Buffer = USB_Core_Endpoint_Descriptors[0].In_Descriptor.Pointer_Address; // Cache the control descriptor buffer address
-	unsigned char Count, i;
+	unsigned char Count;
 	const TUSBCoreDescriptorConfiguration *Pointer_Configuration_Descriptor;
 
 	// Check the correctness of some values
@@ -158,16 +158,18 @@ static inline void USBCoreProcessGetConfigurationDescriptor(unsigned char Config
 	// Append the interfaces if asked to
 	if (Length > USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION)
 	{
-		Count = Pointer_Configuration_Descriptor->bNumInterfaces;
 		Pointer_Endpoint_Descriptor_Buffer += USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION;
-		LOG(USB_CORE_IS_LOGGING_ENABLED, "The configuration descriptor has %u interfaces.", Count);
+		LOG(USB_CORE_IS_LOGGING_ENABLED, "The configuration descriptor has %u interfaces, its total length is %u bytes.", Pointer_Configuration_Descriptor->bNumInterfaces, Pointer_Configuration_Descriptor->wTotalLength);
+
+		// Make sure only no more bytes than contained in the descriptor are transmitted
+		if (Length > Pointer_Configuration_Descriptor->wTotalLength)
+		{
+			Length = (unsigned char) Pointer_Configuration_Descriptor->wTotalLength;
+			LOG(USB_CORE_IS_LOGGING_ENABLED, "The requested length is greater than the descriptor length, adjusting the requested length.");
+		}
 
 		// Append all interface descriptors
-		for (i = 0; i < Count; i++)
-		{
-			memcpy((void *) Pointer_Endpoint_Descriptor_Buffer, &Pointer_Configuration_Descriptor->Pointer_Interfaces[i], USB_CORE_DESCRIPTOR_SIZE_INTERFACE);
-			Pointer_Endpoint_Descriptor_Buffer += USB_CORE_DESCRIPTOR_SIZE_INTERFACE;
-		}
+		memcpy((void *) Pointer_Endpoint_Descriptor_Buffer, Pointer_Configuration_Descriptor->Pointer_Interfaces_Data, Length - USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION);
 	}
 
 	USBCorePrepareForInTransfer(0, NULL, Length, 1);

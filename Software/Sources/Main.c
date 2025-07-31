@@ -4,6 +4,7 @@
  */
 #include <Log.h>
 #include <UART.h>
+#include <USB_Communications.h>
 #include <USB_Core.h>
 #include <xc.h>
 
@@ -34,6 +35,22 @@
 #pragma config EBTR3 = OFF, EBTR2 = OFF, EBTR1 = OFF, EBTR0 = OFF // Disable blocks read protection
 // CONFIG7H register
 #pragma config EBTRB = OFF // Disable boot block read protection
+
+//-------------------------------------------------------------------------------------------------
+// Private types
+//-------------------------------------------------------------------------------------------------
+/** The format of the CDC class specific endpoint descriptors. */
+typedef struct
+{
+	TUSBCoreDescriptorInterface Control_Interface;
+	TUSBCommunicationsFunctionalDescriptorHeader Header;
+	TUSBCommunicationsFunctionalDescriptorAbstractControlManagement Management;
+	TUSBCommunicationsFunctionalDescriptorUnion Union;
+	TUSBCoreDescriptorEndpoint Notification_Endpoint;
+	TUSBCoreDescriptorInterface Data_Interface;
+	TUSBCoreDescriptorEndpoint Data_Out_Endpoint;
+	TUSBCoreDescriptorEndpoint Data_In_Endpoint;
+} __attribute__((packed)) TMainUSBCommunicationsClassSpecificEndpointDescriptor;
 
 //-------------------------------------------------------------------------------------------------
 // Private variables
@@ -67,31 +84,82 @@ static const TUSBCoreDescriptorString Main_USB_String_Descriptors[4] =
 	}
 };
 
-/** The application interface descriptors. */
-static const TUSBCoreDescriptorInterface Main_USB_Interfaces_Descriptors[] =
+/** The interfaces definitions for the unique USB configuration. */
+static const TMainUSBCommunicationsClassSpecificEndpointDescriptor Main_USB_Communications_Class_Specific_Endpoint_Descriptors =
 {
+	.Control_Interface =
 	{
-		.bLength = USB_CORE_DESCRIPTOR_SIZE_INTERFACE,
+		.bLength = sizeof(TUSBCoreDescriptorInterface),
 		.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_INTERFACE,
 		.bInterfaceNumber = 0,
 		.bAlternateSetting = 0,
-		.bNumEndpoints = 0,
-		.bInterfaceClass = 255,
-		.bInterfaceSubClass = 255,
-		.bInterfaceProtocol = 255,
+		.bNumEndpoints = 1,
+		.bInterfaceClass = USB_CORE_INTERFACE_CLASS_CODE_COMMUNICATIONS,
+		.bInterfaceSubClass = USB_CORE_INTERFACE_SUB_CLASS_CODE_ABSTRACT_CONTROL_MODEL,
+		.bInterfaceProtocol = USB_CORE_INTERFACE_PROTOCOL_CODE_ITU_V250,
 		.iInterface = 0
 	},
+	.Header =
 	{
-		.bLength = USB_CORE_DESCRIPTOR_SIZE_INTERFACE,
+		.bFunctionLength = sizeof(TUSBCommunicationsFunctionalDescriptorHeader),
+		.bDescriptorType = USB_COMMUNICATIONS_FUNCTIONAL_DESCRIPTOR_TYPE_INTERFACE,
+		.bDescriptorSubtype = USB_COMMUNICATIONS_FUNCTIONAL_DESCRIPTOR_SUB_TYPE_HEADER,
+		.bcdCDC = USB_COMMUNICATIONS_SPECIFICATION_RELEASE_NUMBER
+	},
+	.Management =
+	{
+		.bFunctionLength = sizeof(TUSBCommunicationsFunctionalDescriptorAbstractControlManagement),
+		.bDescriptorType = USB_COMMUNICATIONS_FUNCTIONAL_DESCRIPTOR_TYPE_INTERFACE,
+		.bDescriptorSubtype = USB_COMMUNICATIONS_FUNCTIONAL_DESCRIPTOR_SUB_TYPE_ABSTRACT_CONTROL_MANAGEMENT,
+		.bmCapabilities = 0 // TODO configure the capabilities
+	},
+	.Union =
+	{
+		.bFunctionLength = sizeof(TUSBCommunicationsFunctionalDescriptorUnion),
+		.bDescriptorType = USB_COMMUNICATIONS_FUNCTIONAL_DESCRIPTOR_TYPE_INTERFACE,
+		.bDescriptorSubtype = USB_COMMUNICATIONS_FUNCTIONAL_DESCRIPTOR_SUB_TYPE_UNION,
+		.bControlInterface = 0,
+		.bSubordinateInterface0 = 1
+	},
+	.Notification_Endpoint =
+	{
+		.bLength = sizeof(TUSBCoreDescriptorEndpoint),
+		.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_ENDPOINT,
+		.bEndpointAddress = 1 | USB_CORE_DESCRIPTOR_ENDPOINT_ATTRIBUTE_ENDPOINT_ADDRESS_DIRECTION_IN,
+		.bmAttributes = USB_CORE_DESCRIPTOR_ENDPOINT_ATTRIBUTE_TRANSFER_TYPE_INTERRUPT,
+		.wMaxPacketSize = 8,
+		.bInterval = 255
+	},
+	.Data_Interface =
+	{
+		.bLength = sizeof(TUSBCoreDescriptorInterface),
 		.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_INTERFACE,
 		.bInterfaceNumber = 1,
 		.bAlternateSetting = 0,
-		.bNumEndpoints = 0,
-		.bInterfaceClass = 47,
-		.bInterfaceSubClass = 32,
-		.bInterfaceProtocol = 188,
+		.bNumEndpoints = 2,
+		.bInterfaceClass = USB_CORE_INTERFACE_CLASS_CODE_DATA_INTERFACE,
+		.bInterfaceSubClass = USB_CORE_INTERFACE_SUB_CLASS_CODE_NONE,
+		.bInterfaceProtocol = USB_CORE_INTERFACE_PROTOCOL_CODE_NONE,
 		.iInterface = 0
 	},
+	.Data_Out_Endpoint =
+	{
+		.bLength = sizeof(TUSBCoreDescriptorEndpoint),
+		.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_ENDPOINT,
+		.bEndpointAddress = 2 | USB_CORE_DESCRIPTOR_ENDPOINT_ATTRIBUTE_ENDPOINT_ADDRESS_DIRECTION_OUT,
+		.bmAttributes = USB_CORE_DESCRIPTOR_ENDPOINT_ATTRIBUTE_TRANSFER_TYPE_BULK,
+		.wMaxPacketSize = USB_CORE_ENDPOINT_PACKETS_SIZE,
+		.bInterval = 1
+	},
+	.Data_In_Endpoint =
+	{
+		.bLength = sizeof(TUSBCoreDescriptorEndpoint),
+		.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_ENDPOINT,
+		.bEndpointAddress = 3 | USB_CORE_DESCRIPTOR_ENDPOINT_ATTRIBUTE_ENDPOINT_ADDRESS_DIRECTION_IN,
+		.bmAttributes = USB_CORE_DESCRIPTOR_ENDPOINT_ATTRIBUTE_TRANSFER_TYPE_BULK,
+		.wMaxPacketSize = USB_CORE_ENDPOINT_PACKETS_SIZE,
+		.bInterval = 1
+	}
 };
 
 /** The application unique USB configuration descriptor. */
@@ -99,13 +167,13 @@ static const TUSBCoreDescriptorConfiguration Main_USB_Configuration_Descriptor =
 {
 	.bLength = USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION,
 	.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_CONFIGURATION,
-	.wTotalLength = USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION + (USB_CORE_ARRAY_SIZE(Main_USB_Interfaces_Descriptors) * USB_CORE_DESCRIPTOR_SIZE_INTERFACE),
-	.bNumInterfaces = USB_CORE_ARRAY_SIZE(Main_USB_Interfaces_Descriptors),
+	.wTotalLength = USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION + sizeof(Main_USB_Communications_Class_Specific_Endpoint_Descriptors),
+	.bNumInterfaces = 2,
 	.bConfigurationValue = 1,
 	.iConfiguration = 0,
 	.bmAttributes = 0, // The device is not self-powered and does not support the remove wakeup feature
 	.bMaxPower = 250, // Take as much power as possible, just in case the logic signal generator needs to power a board
-	.Pointer_Interfaces = Main_USB_Interfaces_Descriptors
+	.Pointer_Interfaces_Data = &Main_USB_Communications_Class_Specific_Endpoint_Descriptors
 };
 
 /** The application USB device descriptor, see chapter 5.1.1 of the Class Definitions for Communications Devices revision 1.2. */
