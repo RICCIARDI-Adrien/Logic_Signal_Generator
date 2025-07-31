@@ -47,20 +47,20 @@ typedef enum : unsigned char
 /** The supported device class codes. */
 typedef enum : unsigned char
 {
-	USB_CORE_DEVICE_CLASS_COMMUNICATIONS = 2 //!< CDC.
-} TUSBCoreDeviceClass;
+	USB_CORE_DEVICE_CLASS_CODE_COMMUNICATIONS = 2 //!< CDC.
+} TUSBCoreDeviceClassCode;
 
 /** The supported device sub class codes. */
 typedef enum : unsigned char
 {
-	USB_CORE_DEVICE_SUB_CLASS_NONE = 0
-} TUSBCoreDeviceSubClass;
+	USB_CORE_DEVICE_SUB_CLASS_CODE_NONE = 0
+} TUSBCoreDeviceSubClassCode;
 
 /** The supported device protocol codes. */
 typedef enum : unsigned char
 {
-	USB_CORE_DEVICE_PROTOCOL_NONE = 0 //!< No device class-specific protocol is used.
-} TUSBCoreDeviceProtocol;
+	USB_CORE_DEVICE_PROTOCOL_CODE_NONE = 0 //!< No device class-specific protocol is used.
+} TUSBCoreDeviceProtocolCode;
 
 /** Some language identifier codes. See the USB document named "Language Identifiers (LANGIDs)". */
 typedef enum : unsigned short
@@ -111,9 +111,9 @@ typedef struct
 	unsigned char bLength;
 	TUSBCoreDescriptorType bDescriptorType;
 	unsigned char bcdUSB[2];
-	TUSBCoreDeviceClass bDeviceClass;
-	unsigned char bDeviceSubClass;
-	unsigned char bDeviceProtocol;
+	TUSBCoreDeviceClassCode bDeviceClass;
+	TUSBCoreDeviceSubClassCode bDeviceSubClass;
+	TUSBCoreDeviceProtocolCode bDeviceProtocol;
 	unsigned char bMaxPacketSize0;
 	unsigned short idVendor;
 	unsigned short idProduct;
