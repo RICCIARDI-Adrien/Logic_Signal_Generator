@@ -30,6 +30,11 @@
 /** The size in bytes of the interface descriptor. */
 #define USB_CORE_DESCRIPTOR_SIZE_INTERFACE 9
 
+/** Retrieve the amount of elements in an array.
+ * @param Array The array (not a pointer on the array).
+ */
+#define USB_CORE_ARRAY_SIZE(Array) (sizeof(Array) / (sizeof(Array[0])))
+
 //-------------------------------------------------------------------------------------------------
 // Types
 //-------------------------------------------------------------------------------------------------

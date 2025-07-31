@@ -68,7 +68,7 @@ static const TUSBCoreDescriptorString Main_USB_String_Descriptors[4] =
 };
 
 /** The application interface descriptors. */
-static const TUSBCoreDescriptorInterface Main_USB_Interfaces_Descriptors_First_Configuration[3] =
+static const TUSBCoreDescriptorInterface Main_USB_Interfaces_Descriptors[] =
 {
 	{
 		.bLength = USB_CORE_DESCRIPTOR_SIZE_INTERFACE,
@@ -92,72 +92,23 @@ static const TUSBCoreDescriptorInterface Main_USB_Interfaces_Descriptors_First_C
 		.bInterfaceProtocol = 188,
 		.iInterface = 0
 	},
-	{
-		.bLength = USB_CORE_DESCRIPTOR_SIZE_INTERFACE,
-		.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_INTERFACE,
-		.bInterfaceNumber = 2,
-		.bAlternateSetting = 0,
-		.bNumEndpoints = 0,
-		.bInterfaceClass = 9,
-		.bInterfaceSubClass = 17,
-		.bInterfaceProtocol = 2,
-		.iInterface = 0
-	}
-};
-static const TUSBCoreDescriptorInterface Main_USB_Interfaces_Descriptors_Second_Configuration[3] =
-{
-	{
-		.bLength = USB_CORE_DESCRIPTOR_SIZE_INTERFACE,
-		.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_INTERFACE,
-		.bInterfaceNumber = 0,
-		.bAlternateSetting = 0,
-		.bNumEndpoints = 0,
-		.bInterfaceClass = 7,
-		.bInterfaceSubClass = 8,
-		.bInterfaceProtocol = 9,
-		.iInterface = 0
-	},
-	{
-		.bLength = USB_CORE_DESCRIPTOR_SIZE_INTERFACE,
-		.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_INTERFACE,
-		.bInterfaceNumber = 1,
-		.bAlternateSetting = 0,
-		.bNumEndpoints = 0,
-		.bInterfaceClass = 100,
-		.bInterfaceSubClass = 101,
-		.bInterfaceProtocol = 102,
-		.iInterface = 0
-	}
 };
 
 /** The application unique USB configuration descriptor. */
-static const TUSBCoreDescriptorConfiguration Main_USB_Configuration_Descriptors[2] = // Store this into the program memory to save some RAM
+static const TUSBCoreDescriptorConfiguration Main_USB_Configuration_Descriptor = // Store this into the program memory to save some RAM
 {
-	{
-		.bLength = USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION,
-		.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_CONFIGURATION,
-		.wTotalLength = USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION + (3 * USB_CORE_DESCRIPTOR_SIZE_INTERFACE), // TEST
-		.bNumInterfaces = 3, // TEST
-		.bConfigurationValue = 1,
-		.iConfiguration = 0,
-		.bmAttributes = 0, // The device is not self-powered and does not support the remove wakeup feature
-		.bMaxPower = 250, // Take as much power as possible, just in case the logic signal generator needs to power a board
-		.Pointer_Interfaces = Main_USB_Interfaces_Descriptors_First_Configuration
-	},
-	{
-		.bLength = USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION,
-		.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_CONFIGURATION,
-		.wTotalLength = USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION + (2 * USB_CORE_DESCRIPTOR_SIZE_INTERFACE), // TEST
-		.bNumInterfaces = 2, // TEST
-		.bConfigurationValue = 6,
-		.iConfiguration = 0,
-		.bmAttributes = 0,
-		.bMaxPower = 10,
-		.Pointer_Interfaces = Main_USB_Interfaces_Descriptors_Second_Configuration
-	}
+	.bLength = USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION,
+	.bDescriptorType = USB_CORE_DESCRIPTOR_TYPE_CONFIGURATION,
+	.wTotalLength = USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION + (USB_CORE_ARRAY_SIZE(Main_USB_Interfaces_Descriptors) * USB_CORE_DESCRIPTOR_SIZE_INTERFACE),
+	.bNumInterfaces = USB_CORE_ARRAY_SIZE(Main_USB_Interfaces_Descriptors),
+	.bConfigurationValue = 1,
+	.iConfiguration = 0,
+	.bmAttributes = 0, // The device is not self-powered and does not support the remove wakeup feature
+	.bMaxPower = 250, // Take as much power as possible, just in case the logic signal generator needs to power a board
+	.Pointer_Interfaces = Main_USB_Interfaces_Descriptors
 };
 
-/** The application USB device descriptor. */
+/** The application USB device descriptor, see chapter 5.1.1 of the Class Definitions for Communications Devices revision 1.2. */
 static const TUSBCoreDescriptorDevice Main_USB_Device_Descriptor = // Store this into the program memory to save some RAM
 {
 	.bLength = USB_CORE_DESCRIPTOR_SIZE_DEVICE,
@@ -173,10 +124,10 @@ static const TUSBCoreDescriptorDevice Main_USB_Device_Descriptor = // Store this
 	.iManufacturer = 1,
 	.iProduct = 2,
 	.iSerialNumber = 3,
-	.bNumConfigurations = 2,
-	.Pointer_Configurations = Main_USB_Configuration_Descriptors,
+	.bNumConfigurations = 1,
+	.Pointer_Configurations = &Main_USB_Configuration_Descriptor,
 	.Pointer_Strings = Main_USB_String_Descriptors,
-	.String_Descriptors_Count = sizeof(Main_USB_String_Descriptors) / sizeof(TUSBCoreDescriptorString)
+	.String_Descriptors_Count = USB_CORE_ARRAY_SIZE(Main_USB_String_Descriptors)
 };
 
 //-------------------------------------------------------------------------------------------------
