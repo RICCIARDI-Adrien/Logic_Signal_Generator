@@ -517,16 +517,12 @@ void USBCoreInterruptHandler(void)
 					Pointer_Hardware_Endpoints_Configuration = &Pointer_USB_Core_Device_Descriptor->Pointer_Hardware_Endpoints_Configuration[Endpoint_ID];
 					Pointer_Hardware_Endpoints_Configuration->Transfer_Callback_Data.Data_Size = Pointer_Endpoint_Descriptor->Out_Descriptor.Bytes_Count;
 					Pointer_Hardware_Endpoints_Configuration->Out_Transfer_Callback(&Pointer_Hardware_Endpoints_Configuration->Transfer_Callback_Data);
-
-					// Re-enable packets reception
-					USBCorePrepareForOutTransfer(Endpoint_ID, 0);
 				}
 
 				// When a setup transfer is received, the SIE disables packets processing, so re-enable it now
 				UCONbits.PKTDIS = 0;
 			}
 		}
-
 		// Clear the interrupt flag
 		UIRbits.TRNIF = 0;
 	}
