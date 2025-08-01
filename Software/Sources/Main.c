@@ -182,22 +182,22 @@ static TUSBCoreHardwareEndpointConfiguration Main_USB_Hardware_Endpoints_Configu
 	// Control endpoint
 	{
 		.Enabled_Directions = USB_CORE_HARDWARE_ENDPOINT_DIRECTION_OUT | USB_CORE_HARDWARE_ENDPOINT_DIRECTION_IN,
-		.Out_Transfert_Callback = NULL, // TEST
+		.Out_Transfer_Callback = NULL, // TEST
 	},
 	// CDC ACM notification
 	{
 		.Enabled_Directions = USB_CORE_HARDWARE_ENDPOINT_DIRECTION_IN,
-		.Out_Transfert_Callback = NULL, // TEST
+		.Out_Transfer_Callback = NULL, // TEST
 	},
 	// CDC ACM data OUT
 	{
 		.Enabled_Directions = USB_CORE_HARDWARE_ENDPOINT_DIRECTION_OUT,
-		.Out_Transfert_Callback = NULL, // TEST
+		.Out_Transfer_Callback = NULL, // TEST
 	},
 	// CDC ACM data IN
 	{
 		.Enabled_Directions = USB_CORE_HARDWARE_ENDPOINT_DIRECTION_IN,
-		.Out_Transfert_Callback = NULL, // TEST
+		.Out_Transfer_Callback = NULL, // TEST
 	}
 };
 

@@ -134,17 +134,25 @@ typedef enum : unsigned short
 	USB_CORE_LANGUAGE_ID_FRENCH_STANDARD = 0x040C
 } TUSBCoreLanguageID;
 
-/** Called when a OUT transfert is received.
- * @param Pointer_Data The hardware USB buffer containing the received data.
- * @param Data_Size The size of the received data.
+/** All needed data to handle received data or to transmit new ones. */
+typedef struct
+{
+	unsigned char Endpoint_ID;
+	unsigned char *Pointer_OUT_Data_Buffer;
+	unsigned char Data_Size;
+} TUSBCoreHardwareEndpointTransferCallbackData;
+
+/** Called when an OUT transfer is received or an IN transfer is completed.
+ * @param Pointer_Transfer_Callback_Data Gather all needed data to service the transfer.
  */
-typedef void (*TUSBCoreHardwareEndpointOUTCallback)(volatile unsigned char *Pointer_Data, unsigned char Data_Size);
+typedef void (*TUSBCoreHardwareEndpointTransferCallback)(TUSBCoreHardwareEndpointTransferCallbackData *Pointer_Transfer_Callback_Data);
 
 /** How to configure the microcontroller hardware USB endpoints. */
 typedef struct
 {
 	unsigned char Enabled_Directions; //!< Configure the IN and/or the OUT endpoints.
-	TUSBCoreHardwareEndpointOUTCallback Out_Transfert_Callback; //!< Called when a non-SETUP OUT transfert is received.
+	TUSBCoreHardwareEndpointTransferCallback Out_Transfer_Callback; //!< Called when an OUT transfert is received.
+	TUSBCoreHardwareEndpointTransferCallbackData Transfer_Callback_Data; //!< Reserved for internal use.
 } TUSBCoreHardwareEndpointConfiguration;
 
 /** An USB string descriptor using the USB naming for simplicity. See the USB specifications 2.0 table 9.6.7. */

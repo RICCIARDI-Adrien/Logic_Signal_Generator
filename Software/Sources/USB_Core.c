@@ -249,6 +249,7 @@ void USBCoreInitialize(const TUSBCoreDescriptorDevice *Pointer_Device_Descriptor
 	{
 		// Assign the data buffers
 		Pointer_Endpoint_Descriptor->Out_Descriptor.Pointer_Address = Pointer_Endpoint_Data_Buffer;
+		Pointer_Endpoint_Hardware_Configuration->Transfer_Callback_Data.Pointer_OUT_Data_Buffer = (unsigned char *) Pointer_Endpoint_Data_Buffer;
 		Pointer_Endpoint_Data_Buffer += USB_CORE_ENDPOINT_PACKETS_SIZE;
 		Pointer_Endpoint_Descriptor->In_Descriptor.Pointer_Address = Pointer_Endpoint_Data_Buffer;
 		Pointer_Endpoint_Data_Buffer += USB_CORE_ENDPOINT_PACKETS_SIZE;
@@ -259,6 +260,8 @@ void USBCoreInitialize(const TUSBCoreDescriptorDevice *Pointer_Device_Descriptor
 
 		// Configure the hardware endpoint
 		*Pointer_Endpoint_Register = 0x18 | Pointer_Endpoint_Hardware_Configuration->Enabled_Directions; // Enable endpoint handshake, disable control transfers
+
+		Pointer_Endpoint_Hardware_Configuration->Transfer_Callback_Data.Endpoint_ID = i;
 
 		Pointer_Endpoint_Descriptor++;
 		Pointer_Endpoint_Hardware_Configuration++;
@@ -327,6 +330,7 @@ void USBCoreInterruptHandler(void)
 	volatile TUSBCoreEndpointBufferDescriptor *Pointer_Endpoint_Descriptor;
 	volatile unsigned char *Pointer_Endpoint_Buffer, *Pointer_Endpoint_Register;
 	volatile TUSBCoreDeviceRequest *Pointer_Device_Request;
+	TUSBCoreHardwareEndpointConfiguration *Pointer_Hardware_Endpoints_Configuration;
 
 	LOG(USB_CORE_IS_LOGGING_ENABLED, "\033[33m--- Entering USB handler ---\033[0m");
 
@@ -503,16 +507,23 @@ void USBCoreInterruptHandler(void)
 							break;
 						}
 					}
-
-					// When a setup transfer is received, the SIE disables packets processing, so re-enable it now
-					UCONbits.PKTDIS = 0;
 				}
 				// This is a class or vendor request, forward it to the class handler
 				else
 				{
-					if ((Pointer_Device_Request->bmRequestType & USB_CORE_DEVICE_REQUEST_TYPE_MASK_TYPE) == USB_CORE_DEVICE_REQUEST_TYPE_VALUE_TYPE_CLASS) LOG(USB_CORE_IS_LOGGING_ENABLED, "Decoded as a class request, calling the corresponding callback.");
-					Pointer_USB_Core_Device_Descriptor->Pointer_Hardware_Endpoints_Configuration[Endpoint_ID].Out_Transfert_Callback(Pointer_Endpoint_Buffer, Pointer_Endpoint_Descriptor->Out_Descriptor.Bytes_Count);
+					if ((Pointer_Device_Request->bmRequestType & USB_CORE_DEVICE_REQUEST_TYPE_MASK_TYPE) == USB_CORE_DEVICE_REQUEST_TYPE_VALUE_TYPE_CLASS) LOG(USB_CORE_IS_LOGGING_ENABLED, "Decoded as a class request (request : 0x%02X, value = 0x%04X, index = 0x%04X, length = 0x%04X), calling the corresponding callback.", Pointer_Device_Request->bRequest, Pointer_Device_Request->wValue, Pointer_Device_Request->wIndex, Pointer_Device_Request->wLength);
+
+					// Call the corresponding callback
+					Pointer_Hardware_Endpoints_Configuration = &Pointer_USB_Core_Device_Descriptor->Pointer_Hardware_Endpoints_Configuration[Endpoint_ID];
+					Pointer_Hardware_Endpoints_Configuration->Transfer_Callback_Data.Data_Size = Pointer_Endpoint_Descriptor->Out_Descriptor.Bytes_Count;
+					Pointer_Hardware_Endpoints_Configuration->Out_Transfer_Callback(&Pointer_Hardware_Endpoints_Configuration->Transfer_Callback_Data);
+
+					// Re-enable packets reception
+					USBCorePrepareForOutTransfer(Endpoint_ID, 0);
 				}
+
+				// When a setup transfer is received, the SIE disables packets processing, so re-enable it now
+				UCONbits.PKTDIS = 0;
 			}
 		}
 
