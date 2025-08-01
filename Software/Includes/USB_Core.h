@@ -134,6 +134,24 @@ typedef enum : unsigned short
 	USB_CORE_LANGUAGE_ID_FRENCH_STANDARD = 0x040C
 } TUSBCoreLanguageID;
 
+/** All supported device request IDs. */
+typedef enum : unsigned char
+{
+	USB_CORE_DEVICE_REQUEST_ID_SET_ADDRESS = 5,
+	USB_CORE_DEVICE_REQUEST_ID_GET_DESCRIPTOR = 6,
+	USB_CORE_DEVICE_REQUEST_ID_SET_CONFIGURATION = 9
+} TUSBCoreDeviceRequestID;
+
+/** The standard format a an USB device request. */
+typedef struct
+{
+	unsigned char bmRequestType;
+	TUSBCoreDeviceRequestID bRequest;
+	unsigned short wValue;
+	unsigned short wIndex;
+	unsigned short wLength;
+} __attribute__((packed)) TUSBCoreDeviceRequest;
+
 /** All needed data to handle received data or to transmit new ones. */
 typedef struct
 {

@@ -66,24 +66,6 @@ typedef struct
 	volatile TUSBCoreBufferDescriptor In_Descriptor; //!< A transfer from the device to the host.
 } __attribute__((packed)) TUSBCoreEndpointBufferDescriptor;
 
-/** All supported device request IDs. */
-typedef enum : unsigned char
-{
-	USB_CORE_DEVICE_REQUEST_ID_SET_ADDRESS = 5,
-	USB_CORE_DEVICE_REQUEST_ID_GET_DESCRIPTOR = 6,
-	USB_CORE_DEVICE_REQUEST_ID_SET_CONFIGURATION = 9
-} TUSBCoreDeviceRequestID;
-
-/** The standard format a an USB device request. */
-typedef struct
-{
-	unsigned char bmRequestType;
-	TUSBCoreDeviceRequestID bRequest;
-	unsigned short wValue;
-	unsigned short wIndex;
-	unsigned short wLength;
-} __attribute__((packed)) TUSBCoreDeviceRequest;
-
 //-------------------------------------------------------------------------------------------------
 // Private variables
 //-------------------------------------------------------------------------------------------------
@@ -521,6 +503,15 @@ void USBCoreInterruptHandler(void)
 
 				// When a setup transfer is received, the SIE disables packets processing, so re-enable it now
 				UCONbits.PKTDIS = 0;
+			}
+			else
+			{
+				LOG(USB_CORE_IS_LOGGING_ENABLED, "Decoded as a normal request.");
+
+				// Call the corresponding callback
+				Pointer_Hardware_Endpoints_Configuration = &Pointer_USB_Core_Device_Descriptor->Pointer_Hardware_Endpoints_Configuration[Endpoint_ID];
+				Pointer_Hardware_Endpoints_Configuration->Transfer_Callback_Data.Data_Size = Pointer_Endpoint_Descriptor->Out_Descriptor.Bytes_Count;
+				Pointer_Hardware_Endpoints_Configuration->Out_Transfer_Callback(&Pointer_Hardware_Endpoints_Configuration->Transfer_Callback_Data);
 			}
 		}
 		// Clear the interrupt flag
