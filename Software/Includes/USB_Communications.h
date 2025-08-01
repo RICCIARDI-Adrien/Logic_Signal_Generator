@@ -5,6 +5,8 @@
 #ifndef H_USB_COMMUNICATIONS_H
 #define H_USB_COMMUNICATIONS_H
 
+#include <USB_Core.h>
+
 //-------------------------------------------------------------------------------------------------
 // Constants
 //-------------------------------------------------------------------------------------------------
@@ -58,5 +60,13 @@ typedef struct
 	unsigned char bControlInterface;
 	unsigned char bSubordinateInterface0;
 } __attribute__((packed)) TUSBCommunicationsFunctionalDescriptorUnion;
+
+//-------------------------------------------------------------------------------------------------
+// Functions
+//-------------------------------------------------------------------------------------------------
+/** Process a CDC ACM control request.
+ * @param Pointer_Transfer_Callback_Data The request data.
+ */
+void USBCommunicationsHandleControlRequest(TUSBCoreHardwareEndpointTransferCallbackData *Pointer_Transfer_Callback_Data);
 
 #endif
