@@ -314,6 +314,11 @@ void USBCoreInterruptHandler(void)
 	volatile TUSBCoreDeviceRequest *Pointer_Device_Request;
 	TUSBCoreHardwareEndpointConfiguration *Pointer_Hardware_Endpoints_Configuration;
 
+	// Clear the main USB interrupt flag at the beginning, because this flag needs to be cleared before the transfer complete one is cleared, otherwise a transfer stored in the USTAT FIFO might be lost.
+	// When TRNIF is cleared and there is a transfer in the FIFO, the USBIF flag is reasserted pretty soon. That's why the latter flag needs to be cleared first.
+	// There is no issue of USB interrupt handler re-entrancy because the interrupts are disabled until the handler returns
+	PIR3bits.USBIF = 0;
+
 	LOG(USB_CORE_IS_LOGGING_ENABLED, "\033[33m--- Entering USB handler ---\033[0m");
 
 	// Display low level debugging information
@@ -356,7 +361,7 @@ void USBCoreInterruptHandler(void)
 	{
 		LOG(USB_CORE_IS_LOGGING_ENABLED, "Detected a Reset condition, starting enumeration process.");
 		UIRbits.URSTIF = 0; // Clear the interrupt flag
-		goto Exit;
+		return;
 	}
 
 	// Re-enable a stalled endpoint upon reception of a stall handshake
@@ -377,7 +382,7 @@ void USBCoreInterruptHandler(void)
 
 		// Clear the interrupt flag
 		UIRbits.STALLIF = 0;
-		goto Exit;
+		return;
 	}
 
 	// Manage data transmission and reception
@@ -517,8 +522,4 @@ void USBCoreInterruptHandler(void)
 		// Clear the interrupt flag
 		UIRbits.TRNIF = 0;
 	}
-
-Exit:
-	// Clear the interrupt flag
-	PIR3bits.USBIF = 0;
 }
