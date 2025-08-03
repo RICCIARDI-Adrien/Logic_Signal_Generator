@@ -26,9 +26,10 @@
 //-------------------------------------------------------------------------------------------------
 // Private types
 //-------------------------------------------------------------------------------------------------
-/** All supported USB packet ID types (see USB 2.0 specifications table 8.1). */
+/** All supported USB packet ID types (see USB 2.0 specifications table 8-1). */
 typedef enum : unsigned char
 {
+	USB_CORE_PACKET_IDENTIFIER_TYPE_TOKEN_OUT = 0x01,
 	USB_CORE_PACKET_IDENTIFIER_TYPE_HANDSHAKE_ACK = 0x02,
 	USB_CORE_PACKET_IDENTIFIER_TYPE_TOKEN_SETUP = 0x0D
 } TUSBCorePacketIdentifierType;
@@ -365,6 +366,9 @@ void USBCoreInterruptHandler(void)
 		{
 			switch (Pointer_Endpoint_Descriptor->Out_Descriptor.Status_From_Peripheral.PID)
 			{
+				case USB_CORE_PACKET_IDENTIFIER_TYPE_TOKEN_OUT:
+					Pointer_String_Packet_Identifier = "token OUT";
+					break;
 				case USB_CORE_PACKET_IDENTIFIER_TYPE_HANDSHAKE_ACK:
 					Pointer_String_Packet_Identifier = "handshake ACK";
 					break;
@@ -372,7 +376,7 @@ void USBCoreInterruptHandler(void)
 					Pointer_String_Packet_Identifier = "token SETUP";
 					break;
 				default:
-					Pointer_String_Packet_Identifier = "unknown";
+					Pointer_String_Packet_Identifier = "\033[31munknown\033[0m";
 					break;
 			}
 			printf("Received Packet Identifier (PID) : %s.\r\n", Pointer_String_Packet_Identifier);
@@ -445,8 +449,18 @@ void USBCoreInterruptHandler(void)
 			// Handle the request according to its type
 			Packet_Identifier_Type = Pointer_Endpoint_Descriptor->Out_Descriptor.Status_From_Peripheral.PID;
 
+			// Host sending a normal OUT
+			if (Packet_Identifier_Type == USB_CORE_PACKET_IDENTIFIER_TYPE_TOKEN_OUT)
+			{
+				LOG(USB_CORE_IS_LOGGING_ENABLED, "Decoded as a normal OUT packet, calling the corresponding endpoint callback.");
+
+				// Call the corresponding callback
+				Pointer_Hardware_Endpoints_Configuration = &Pointer_USB_Core_Device_Descriptor->Pointer_Hardware_Endpoints_Configuration[Endpoint_ID];
+				Pointer_Hardware_Endpoints_Configuration->Transfer_Callback_Data.Data_Size = Pointer_Endpoint_Descriptor->Out_Descriptor.Bytes_Count;
+				Pointer_Hardware_Endpoints_Configuration->Out_Transfer_Callback(&Pointer_Hardware_Endpoints_Configuration->Transfer_Callback_Data);
+			}
 			// Host acknowledging an IN transfer
-			if (Packet_Identifier_Type == USB_CORE_PACKET_IDENTIFIER_TYPE_HANDSHAKE_ACK) LOG(USB_CORE_IS_LOGGING_ENABLED, "Received a handshake ACK from the host.");
+			else if (Packet_Identifier_Type == USB_CORE_PACKET_IDENTIFIER_TYPE_HANDSHAKE_ACK) LOG(USB_CORE_IS_LOGGING_ENABLED, "Received a handshake ACK from the host.");
 			// Host sending a SETUP request
 			else if (Packet_Identifier_Type == USB_CORE_PACKET_IDENTIFIER_TYPE_TOKEN_SETUP)
 			{
@@ -532,15 +546,6 @@ void USBCoreInterruptHandler(void)
 
 				// When a setup transfer is received, the SIE disables packets processing, so re-enable it now
 				UCONbits.PKTDIS = 0;
-			}
-			else
-			{
-				LOG(USB_CORE_IS_LOGGING_ENABLED, "Decoded as a normal request.");
-
-				// Call the corresponding callback
-				Pointer_Hardware_Endpoints_Configuration = &Pointer_USB_Core_Device_Descriptor->Pointer_Hardware_Endpoints_Configuration[Endpoint_ID];
-				Pointer_Hardware_Endpoints_Configuration->Transfer_Callback_Data.Data_Size = Pointer_Endpoint_Descriptor->Out_Descriptor.Bytes_Count;
-				Pointer_Hardware_Endpoints_Configuration->Out_Transfer_Callback(&Pointer_Hardware_Endpoints_Configuration->Transfer_Callback_Data);
 			}
 		}
 		// Clear the interrupt flag
