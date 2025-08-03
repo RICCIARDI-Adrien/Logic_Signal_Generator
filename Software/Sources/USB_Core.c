@@ -321,6 +321,11 @@ void USBCoreInterruptHandler(void)
 
 	LOG(USB_CORE_IS_LOGGING_ENABLED, "\033[33m--- Entering USB handler ---\033[0m");
 
+	// Cache the involved endpoint information
+	Endpoint_ID = USTAT >> 3;
+	Is_In_Transfer = USTATbits.DIR; // Determine the transfer direction
+	Pointer_Endpoint_Descriptor = &USB_Core_Endpoint_Descriptors[Endpoint_ID]; // Cache the endpoint access
+
 	// Display low level debugging information
 	LOG_BEGIN_SECTION(USB_CORE_IS_LOGGING_ENABLED)
 	{
@@ -346,8 +351,6 @@ void USBCoreInterruptHandler(void)
 		if (UCONbits.PKTDIS) printf("USB packet processing is disabled (PKTDIS).\r\n");
 
 		// Display the last endpoint activity
-		Endpoint_ID = USTAT >> 3;
-		Is_In_Transfer = USTATbits.DIR;
 		printf("Last endpoint ID : %u, transaction type : %s.\r\n", Endpoint_ID, Is_In_Transfer ? "IN" : "OUT");
 
 		// Tell whether the endpoint is stalled by the host
@@ -367,11 +370,6 @@ void USBCoreInterruptHandler(void)
 	// Re-enable a stalled endpoint upon reception of a stall handshake
 	if (UIRbits.STALLIF)
 	{
-		// Cache the involved endpoint information
-		Endpoint_ID = USTAT >> 3;
-		Is_In_Transfer = USTATbits.DIR; // Determine the transfer direction
-		Pointer_Endpoint_Descriptor = &USB_Core_Endpoint_Descriptors[Endpoint_ID]; // Cache the endpoint access
-
 		// The endpoint stall indication needs to be cleared by software
 		LOG(USB_CORE_IS_LOGGING_ENABLED, "Received the %s endpoint %u stall handshake, clearing the endpoint stall condition.", Is_In_Transfer ? "IN" : "OUT", Endpoint_ID);
 		Pointer_Endpoint_Register = &UEP0 + Endpoint_ID;
@@ -388,11 +386,6 @@ void USBCoreInterruptHandler(void)
 	// Manage data transmission and reception
 	if (UIRbits.TRNIF)
 	{
-		// Cache the involved endpoint information
-		Endpoint_ID = USTAT >> 3;
-		Is_In_Transfer = USTATbits.DIR; // Determine the transfer direction
-		Pointer_Endpoint_Descriptor = &USB_Core_Endpoint_Descriptors[Endpoint_ID]; // Cache the endpoint access
-
 		// Cache the endpoint data buffer access
 		if (Is_In_Transfer) Pointer_Endpoint_Buffer = Pointer_Endpoint_Descriptor->In_Descriptor.Pointer_Address;
 		else Pointer_Endpoint_Buffer = Pointer_Endpoint_Descriptor->Out_Descriptor.Pointer_Address;
