@@ -32,7 +32,7 @@ void USBCommunicationsHandleControlRequest(TUSBCoreHardwareEndpointTransferCallb
 		// Check wether a payload is expected
 		TUSBCoreDeviceRequest *Pointer_Request = (TUSBCoreDeviceRequest *) Pointer_Transfer_Callback_Data->Pointer_OUT_Data_Buffer;
 		Last_Request_Code = (TUSBCommunicationsPSTNRequestCode) Pointer_Request->bRequest;
-		LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Received a request with the code %u.", Last_Request_Code);
+		LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Received a request with the code 0x%02X.", Last_Request_Code);
 
 		// Prepare the state machine for the payload reception
 		if (Pointer_Request->wLength > 0)
@@ -43,7 +43,19 @@ void USBCommunicationsHandleControlRequest(TUSBCoreHardwareEndpointTransferCallb
 		else
 		{
 			LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "No payload is expected, processing the request.");
-			// TODO no request without payload is supported yet
+
+			// Process the request
+			switch (Last_Request_Code)
+			{
+				case USB_COMMUNICATIONS_PSTN_REQUEST_CODE_SET_CONTROL_LINE_STATE:
+					// This request is ignored
+					LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Processing the Set Control Line State PSTN request.");
+					break;
+
+				default:
+					LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Unsupported request %u.", Last_Request_Code);
+					break;
+			}
 		}
 	}
 	// The payload has been received
@@ -53,7 +65,7 @@ void USBCommunicationsHandleControlRequest(TUSBCoreHardwareEndpointTransferCallb
 		switch (Last_Request_Code)
 		{
 			case USB_COMMUNICATIONS_PSTN_REQUEST_CODE_SET_LINE_CODING:
-				// This command is ignored, only display the payload content
+				// This request is ignored, only display the payload content
 				LOG_BEGIN_SECTION(USB_COMMUNICATIONS_IS_LOGGING_ENABLED)
 				{
 					TUSBCommunicationsPSTNRequestGetLineCodingPayload *Pointer_Payload = (TUSBCommunicationsPSTNRequestGetLineCodingPayload *) Pointer_Transfer_Callback_Data->Pointer_OUT_Data_Buffer;
@@ -94,9 +106,12 @@ void USBCommunicationsHandleControlRequest(TUSBCoreHardwareEndpointTransferCallb
 				LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Unsupported request %u.", Last_Request_Code);
 				break;
 		}
+
+		// Wait for the next request
+		Current_State = STATE_RECEIVE_REQUEST;
 	}
 
 	// Manage the USB connection
 	USBCorePrepareForInTransfer(Pointer_Transfer_Callback_Data->Endpoint_ID, NULL, 0, 1); // Send back an empty packet to acknowledge the command reception
-	USBCorePrepareForOutTransfer(Pointer_Transfer_Callback_Data->Endpoint_ID, 1); // Re-enable packets reception
+	USBCorePrepareForOutTransfer(Pointer_Transfer_Callback_Data->Endpoint_ID, 0); // Re-enable packets reception
 }

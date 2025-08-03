@@ -64,7 +64,8 @@ typedef struct
 /** All supported PSTN class-specific request codes. See CDC PSTN revision 1.2 table 13. */
 typedef enum : unsigned char
 {
-	USB_COMMUNICATIONS_PSTN_REQUEST_CODE_SET_LINE_CODING = 0x20
+	USB_COMMUNICATIONS_PSTN_REQUEST_CODE_SET_LINE_CODING = 0x20,
+	USB_COMMUNICATIONS_PSTN_REQUEST_CODE_SET_CONTROL_LINE_STATE = 0x22
 } TUSBCommunicationsPSTNRequestCode;
 
 /** The PSTN Get/Set Line Coding request payload. */
