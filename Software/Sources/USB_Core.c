@@ -245,19 +245,21 @@ void USBCoreInitialize(const TUSBCoreDescriptorDevice *Pointer_Device_Descriptor
 		Pointer_Endpoint_Descriptor->Out_Descriptor.Status = 0;
 		Pointer_Endpoint_Descriptor->In_Descriptor.Status = 0;
 
+		// Assign the endpoint ID, which is useful inside the endpoint callback
+		Pointer_Endpoint_Hardware_Configuration->Transfer_Callback_Data.Endpoint_ID = i;
+
 		// Configure the hardware endpoint
 		*Pointer_Endpoint_Register = 0x18 | Pointer_Endpoint_Hardware_Configuration->Enabled_Directions; // Enable endpoint handshake, disable control transfers
 
-		Pointer_Endpoint_Hardware_Configuration->Transfer_Callback_Data.Endpoint_ID = i;
+		// Make sure that the endpoint can receive a packet (all host transactions start with a synchronization value of 0)
+		USBCorePrepareForOutTransfer(i, 0);
 
+		Pointer_Endpoint_Register++;
 		Pointer_Endpoint_Descriptor++;
 		Pointer_Endpoint_Hardware_Configuration++;
 	}
 	// Ensure that the endpoint 0, used as the control endpoint, is always correctly configured
 	UEP0 = 0x16; // Enable endpoint handshake, allow control transfers, enable the endpoint OUT and IN directions
-
-	// Make sure that the control endpoint can receive a packet
-	USBCorePrepareForOutTransfer(0, 0);
 
 	// Configure the interrupts
 	PIE3bits.USBIE = 1; // Enable the USB peripheral global interrupt
