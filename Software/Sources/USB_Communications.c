@@ -39,6 +39,11 @@ void USBCommunicationsHandleControlRequest(TUSBCoreHardwareEndpointTransferCallb
 		{
 			LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Expecting a payload of %u bytes.", Pointer_Request->wLength);
 			Current_State = STATE_RECEIVE_PAYLOAD;
+
+			// The request (sent by the host) data synchronization is always 0, so wait for a 1 for the next packet containing the payload
+			// Do not acknowledge the packet reception with an empty IN packet because we are waiting for the payload OUT one
+			USBCorePrepareForOutTransfer(Pointer_Transfer_Callback_Data->Endpoint_ID, 1);
+			return;
 		}
 		else
 		{
@@ -61,6 +66,8 @@ void USBCommunicationsHandleControlRequest(TUSBCoreHardwareEndpointTransferCallb
 	// The payload has been received
 	else
 	{
+		LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "The request payload of %u bytes has been received.", Pointer_Transfer_Callback_Data->Data_Size);
+
 		// Process the request
 		switch (Last_Request_Code)
 		{
