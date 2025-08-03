@@ -23,12 +23,16 @@
 #define USB_CORE_DEVICE_REQUEST_TYPE_VALUE_RECIPIENT_ENDPOINT 2
 #define USB_CORE_DEVICE_REQUEST_TYPE_VALUE_RECIPIENT_OTHER 3
 
-/** All supported USB packet ID types (see USB 2.0 specifications table 8.1). */
-#define USB_CORE_PACKET_ID_TYPE_SETUP 0x0D
-
 //-------------------------------------------------------------------------------------------------
 // Private types
 //-------------------------------------------------------------------------------------------------
+/** All supported USB packet ID types (see USB 2.0 specifications table 8.1). */
+typedef enum : unsigned char
+{
+	USB_CORE_PACKET_IDENTIFIER_TYPE_HANDSHAKE_ACK = 0x02,
+	USB_CORE_PACKET_IDENTIFIER_TYPE_TOKEN_SETUP = 0x0D
+} TUSBCorePacketIdentifierType;
+
 /** An SIE endpoint descriptor, applicable to a single-direction hardware endpoint. */
 typedef struct
 {
@@ -313,6 +317,7 @@ void USBCoreInterruptHandler(void)
 	volatile unsigned char *Pointer_Endpoint_Buffer, *Pointer_Endpoint_Register;
 	volatile TUSBCoreDeviceRequest *Pointer_Device_Request;
 	TUSBCoreHardwareEndpointConfiguration *Pointer_Hardware_Endpoints_Configuration;
+	TUSBCorePacketIdentifierType Packet_Identifier_Type;
 
 	// Clear the main USB interrupt flag at the beginning, because this flag needs to be cleared before the transfer complete one is cleared, otherwise a transfer stored in the USTAT FIFO might be lost.
 	// When TRNIF is cleared and there is a transfer in the FIFO, the USBIF flag is reasserted pretty soon. That's why the latter flag needs to be cleared first.
@@ -329,6 +334,8 @@ void USBCoreInterruptHandler(void)
 	// Display low level debugging information
 	LOG_BEGIN_SECTION(USB_CORE_IS_LOGGING_ENABLED)
 	{
+		const char *Pointer_String_Packet_Identifier;
+
 		// Display the fired interrupts
 		printf("Status interrupts register : 0x%02X", UIR);
 		if (UIRbits.SOFIF) printf(" SOF");
@@ -352,6 +359,24 @@ void USBCoreInterruptHandler(void)
 
 		// Display the last endpoint activity
 		printf("Last endpoint ID : %u, transaction type : %s.\r\n", Endpoint_ID, Is_In_Transfer ? "IN" : "OUT");
+
+		// Show the received packet (OUT) type
+		if (!Is_In_Transfer)
+		{
+			switch (Pointer_Endpoint_Descriptor->Out_Descriptor.Status_From_Peripheral.PID)
+			{
+				case USB_CORE_PACKET_IDENTIFIER_TYPE_HANDSHAKE_ACK:
+					Pointer_String_Packet_Identifier = "handshake ACK";
+					break;
+				case USB_CORE_PACKET_IDENTIFIER_TYPE_TOKEN_SETUP:
+					Pointer_String_Packet_Identifier = "token SETUP";
+					break;
+				default:
+					Pointer_String_Packet_Identifier = "unknown";
+					break;
+			}
+			printf("Received Packet Identifier (PID) : %s.\r\n", Pointer_String_Packet_Identifier);
+		}
 
 		// Tell whether the endpoint is stalled by the host
 		Pointer_Endpoint_Register = &UEP0 + Endpoint_ID;
@@ -417,9 +442,15 @@ void USBCoreInterruptHandler(void)
 			}
 			LOG_END_SECTION()
 
-			// Manage the standard setup requests (TODO organize better to support other requests)
-			if (Pointer_Endpoint_Descriptor->Out_Descriptor.Status_From_Peripheral.PID == USB_CORE_PACKET_ID_TYPE_SETUP) // Such requests are only addressed to the endpoint 0
+			// Handle the request according to its type
+			Packet_Identifier_Type = Pointer_Endpoint_Descriptor->Out_Descriptor.Status_From_Peripheral.PID;
+
+			// Host acknowledging an IN transfer
+			if (Packet_Identifier_Type == USB_CORE_PACKET_IDENTIFIER_TYPE_HANDSHAKE_ACK) LOG(USB_CORE_IS_LOGGING_ENABLED, "Received a handshake ACK from the host.");
+			// Host sending a SETUP request
+			else if (Packet_Identifier_Type == USB_CORE_PACKET_IDENTIFIER_TYPE_TOKEN_SETUP)
 			{
+				// Manage the standard setup requests
 				Pointer_Device_Request = (volatile TUSBCoreDeviceRequest *) Pointer_Endpoint_Buffer;
 				if ((Pointer_Device_Request->bmRequestType & USB_CORE_DEVICE_REQUEST_TYPE_MASK_TYPE) == USB_CORE_DEVICE_REQUEST_TYPE_VALUE_TYPE_STANDARD)
 				{
