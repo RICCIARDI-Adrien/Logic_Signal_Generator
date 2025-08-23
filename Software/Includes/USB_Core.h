@@ -158,19 +158,25 @@ typedef struct
 	unsigned char Endpoint_ID;
 	unsigned char *Pointer_OUT_Data_Buffer;
 	unsigned char Data_Size;
-} TUSBCoreHardwareEndpointTransferCallbackData;
+} TUSBCoreHardwareEndpointOutTransferCallbackData;
 
-/** Called when an OUT transfer is received or an IN transfer is completed.
+/** Called when an OUT transfer is received.
  * @param Pointer_Transfer_Callback_Data Gather all needed data to service the transfer.
  */
-typedef void (*TUSBCoreHardwareEndpointTransferCallback)(TUSBCoreHardwareEndpointTransferCallbackData *Pointer_Transfer_Callback_Data);
+typedef void (*TUSBCoreHardwareEndpointOutTransferCallback)(TUSBCoreHardwareEndpointOutTransferCallbackData *Pointer_Transfer_Callback_Data);
+
+/** Called when the host sends an acknowledge to the device after the successful reception of an IN packet.
+ * @param Endpoint_ID The number of the endpoint that received an ACK.
+ */
+typedef void (*TUSBCoreHardwareEndpointInTransferCallback)(unsigned char Endpoint_ID);
 
 /** How to configure the microcontroller hardware USB endpoints. */
 typedef struct
 {
 	unsigned char Enabled_Directions; //!< Configure the IN and/or the OUT endpoints.
-	TUSBCoreHardwareEndpointTransferCallback Out_Transfer_Callback; //!< Called when an OUT transfert is received.
-	TUSBCoreHardwareEndpointTransferCallbackData Transfer_Callback_Data; //!< Reserved for internal use.
+	TUSBCoreHardwareEndpointOutTransferCallback Out_Transfer_Callback; //!< Called when an OUT transfert is received.
+	TUSBCoreHardwareEndpointInTransferCallback In_Transfer_Callback; //!< Called when the host sends an ACK. Can be NULL if not required.
+	TUSBCoreHardwareEndpointOutTransferCallbackData Out_Transfer_Callback_Data; //!< Automatically initialized.
 } TUSBCoreHardwareEndpointConfiguration;
 
 /** An USB string descriptor using the USB naming for simplicity. See the USB specifications 2.0 table 9.6.7. */

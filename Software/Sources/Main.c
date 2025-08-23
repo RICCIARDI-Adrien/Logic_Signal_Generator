@@ -176,10 +176,11 @@ static const TUSBCoreDescriptorConfiguration Main_USB_Configuration_Descriptor =
 };
 
 // TEST
-static void MainSimpleEcho(TUSBCoreHardwareEndpointTransferCallbackData *Pointer_Transfer_Callback_Data)
+static void MainSimpleEcho(TUSBCoreHardwareEndpointOutTransferCallbackData *Pointer_Transfer_Callback_Data)
 {
-	LOG(1, "reception");
 	static unsigned char Sync = 1;
+
+	LOG(1, "reception");
 
 	// Manage the USB connection
 	USBCorePrepareForOutTransfer(Pointer_Transfer_Callback_Data->Endpoint_ID, Sync); // Re-enable packets reception
@@ -189,28 +190,38 @@ static void MainSimpleEcho(TUSBCoreHardwareEndpointTransferCallbackData *Pointer
 	USBCorePrepareForInTransfer(3, Pointer_Transfer_Callback_Data->Pointer_OUT_Data_Buffer, Pointer_Transfer_Callback_Data->Data_Size, Sync ? 0 : 1);
 }
 
+// TEST
+static void MainSimpleEchoFlowControl(unsigned char Endpoint_ID)
+{
+	LOG(1, "ACK %u", Endpoint_ID);
+}
+
 /** Each used hardware USB endpoint configuration. */
 static TUSBCoreHardwareEndpointConfiguration Main_USB_Hardware_Endpoints_Configuration[] =
 {
 	// Control endpoint
 	{
 		.Enabled_Directions = USB_CORE_HARDWARE_ENDPOINT_DIRECTION_OUT | USB_CORE_HARDWARE_ENDPOINT_DIRECTION_IN,
-		.Out_Transfer_Callback = USBCommunicationsHandleControlRequest
+		.Out_Transfer_Callback = USBCommunicationsHandleControlRequest,
+		.In_Transfer_Callback = NULL
 	},
 	// CDC ACM notification
 	{
 		.Enabled_Directions = USB_CORE_HARDWARE_ENDPOINT_DIRECTION_IN,
-		.Out_Transfer_Callback = NULL
+		.Out_Transfer_Callback = NULL,
+		.In_Transfer_Callback = NULL
 	},
 	// CDC ACM data OUT
 	{
 		.Enabled_Directions = USB_CORE_HARDWARE_ENDPOINT_DIRECTION_OUT,
-		.Out_Transfer_Callback = MainSimpleEcho // Only this endpoint can receive data
+		.Out_Transfer_Callback = MainSimpleEcho, // Only this endpoint can receive data
+		.In_Transfer_Callback = NULL
 	},
 	// CDC ACM data IN
 	{
-		.Enabled_Directions = USB_CORE_HARDWARE_ENDPOINT_DIRECTION_IN,
-		.Out_Transfer_Callback = NULL
+		.Enabled_Directions = USB_CORE_HARDWARE_ENDPOINT_DIRECTION_OUT | USB_CORE_HARDWARE_ENDPOINT_DIRECTION_IN,
+		.Out_Transfer_Callback = NULL,
+		.In_Transfer_Callback = MainSimpleEchoFlowControl
 	}
 };
 

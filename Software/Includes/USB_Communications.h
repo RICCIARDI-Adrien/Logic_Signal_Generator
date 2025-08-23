@@ -83,6 +83,6 @@ typedef struct
 /** Process a CDC ACM control request.
  * @param Pointer_Transfer_Callback_Data The request data.
  */
-void USBCommunicationsHandleControlRequest(TUSBCoreHardwareEndpointTransferCallbackData *Pointer_Transfer_Callback_Data);
+void USBCommunicationsHandleControlRequest(TUSBCoreHardwareEndpointOutTransferCallbackData *Pointer_Transfer_Callback_Data);
 
 #endif

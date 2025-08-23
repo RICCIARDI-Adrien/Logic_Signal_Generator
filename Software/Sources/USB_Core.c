@@ -236,7 +236,7 @@ void USBCoreInitialize(const TUSBCoreDescriptorDevice *Pointer_Device_Descriptor
 	{
 		// Assign the data buffers
 		Pointer_Endpoint_Descriptor->Out_Descriptor.Pointer_Address = Pointer_Endpoint_Data_Buffer;
-		Pointer_Endpoint_Hardware_Configuration->Transfer_Callback_Data.Pointer_OUT_Data_Buffer = (unsigned char *) Pointer_Endpoint_Data_Buffer;
+		Pointer_Endpoint_Hardware_Configuration->Out_Transfer_Callback_Data.Pointer_OUT_Data_Buffer = (unsigned char *) Pointer_Endpoint_Data_Buffer;
 		Pointer_Endpoint_Data_Buffer += USB_CORE_ENDPOINT_PACKETS_SIZE;
 		Pointer_Endpoint_Descriptor->In_Descriptor.Pointer_Address = Pointer_Endpoint_Data_Buffer;
 		Pointer_Endpoint_Data_Buffer += USB_CORE_ENDPOINT_PACKETS_SIZE;
@@ -246,7 +246,7 @@ void USBCoreInitialize(const TUSBCoreDescriptorDevice *Pointer_Device_Descriptor
 		Pointer_Endpoint_Descriptor->In_Descriptor.Status = 0;
 
 		// Assign the endpoint ID, which is useful inside the endpoint callback
-		Pointer_Endpoint_Hardware_Configuration->Transfer_Callback_Data.Endpoint_ID = i;
+		Pointer_Endpoint_Hardware_Configuration->Out_Transfer_Callback_Data.Endpoint_ID = i;
 
 		// Configure the hardware endpoint
 		*Pointer_Endpoint_Register = 0x18 | Pointer_Endpoint_Hardware_Configuration->Enabled_Directions; // Enable endpoint handshake, disable control transfers
@@ -432,6 +432,13 @@ void USBCoreInterruptHandler(void)
 				UADDR = Device_Address;
 				Device_Address = 0;
 			}
+			else
+			{
+				LOG(USB_CORE_IS_LOGGING_ENABLED, "An IN transfer is completed, calling the corresponding callback (if any).");
+				// Call the corresponding callback
+				Pointer_Hardware_Endpoints_Configuration = &Pointer_USB_Core_Device_Descriptor->Pointer_Hardware_Endpoints_Configuration[Endpoint_ID];
+				if (Pointer_Hardware_Endpoints_Configuration->In_Transfer_Callback != NULL) Pointer_Hardware_Endpoints_Configuration->In_Transfer_Callback(Endpoint_ID);
+			}
 		}
 		// OUT or SETUP transfer
 		else
@@ -458,8 +465,8 @@ void USBCoreInterruptHandler(void)
 
 				// Call the corresponding callback
 				Pointer_Hardware_Endpoints_Configuration = &Pointer_USB_Core_Device_Descriptor->Pointer_Hardware_Endpoints_Configuration[Endpoint_ID];
-				Pointer_Hardware_Endpoints_Configuration->Transfer_Callback_Data.Data_Size = Pointer_Endpoint_Descriptor->Out_Descriptor.Bytes_Count;
-				Pointer_Hardware_Endpoints_Configuration->Out_Transfer_Callback(&Pointer_Hardware_Endpoints_Configuration->Transfer_Callback_Data);
+				Pointer_Hardware_Endpoints_Configuration->Out_Transfer_Callback_Data.Data_Size = Pointer_Endpoint_Descriptor->Out_Descriptor.Bytes_Count;
+				Pointer_Hardware_Endpoints_Configuration->Out_Transfer_Callback(&Pointer_Hardware_Endpoints_Configuration->Out_Transfer_Callback_Data);
 			}
 			// Host acknowledging an IN transfer
 			else if (Packet_Identifier_Type == USB_CORE_PACKET_IDENTIFIER_TYPE_HANDSHAKE_ACK) LOG(USB_CORE_IS_LOGGING_ENABLED, "Received a handshake ACK from the host.");
@@ -542,8 +549,8 @@ void USBCoreInterruptHandler(void)
 
 					// Call the corresponding callback
 					Pointer_Hardware_Endpoints_Configuration = &Pointer_USB_Core_Device_Descriptor->Pointer_Hardware_Endpoints_Configuration[Endpoint_ID];
-					Pointer_Hardware_Endpoints_Configuration->Transfer_Callback_Data.Data_Size = Pointer_Endpoint_Descriptor->Out_Descriptor.Bytes_Count;
-					Pointer_Hardware_Endpoints_Configuration->Out_Transfer_Callback(&Pointer_Hardware_Endpoints_Configuration->Transfer_Callback_Data);
+					Pointer_Hardware_Endpoints_Configuration->Out_Transfer_Callback_Data.Data_Size = Pointer_Endpoint_Descriptor->Out_Descriptor.Bytes_Count;
+					Pointer_Hardware_Endpoints_Configuration->Out_Transfer_Callback(&Pointer_Hardware_Endpoints_Configuration->Out_Transfer_Callback_Data);
 				}
 
 				// When a setup transfer is received, the SIE disables packets processing, so re-enable it now
