@@ -107,10 +107,10 @@ static void USBCoreStallEndpoint(unsigned char Endpoint_ID)
  * @param Configuration_Index The configuration to obtain information from.
  * @param Length The amount of configuration bytes requested by the host.
  */
-static inline void USBCoreProcessGetConfigurationDescriptor(unsigned char Configuration_Index, unsigned char Length)
+static inline void USBCoreProcessGetConfigurationDescriptor(unsigned char Configuration_Index, unsigned short Length)
 {
 	volatile unsigned char *Pointer_Endpoint_Descriptor_Buffer = USB_Core_Endpoint_Descriptors[0].In_Descriptor.Pointer_Address; // Cache the control descriptor buffer address
-	unsigned char Count;
+	unsigned char Count, Adjusted_Length;
 	const TUSBCoreDescriptorConfiguration *Pointer_Configuration_Descriptor;
 
 	// Check the correctness of some values
@@ -128,10 +128,11 @@ static inline void USBCoreProcessGetConfigurationDescriptor(unsigned char Config
 	}
 
 	// Clamp the requested total length to the one of a packet
-	if (Length > USB_CORE_ENDPOINT_PACKETS_SIZE)
+	if (Length <= USB_CORE_ENDPOINT_PACKETS_SIZE) Adjusted_Length = (unsigned char) Length; // TODO support for data greater than USB_CORE_ENDPOINT_PACKETS_SIZE
+	else
 	{
 		LOG(USB_CORE_IS_LOGGING_ENABLED, "Limiting the requested size of %u bytes to the maximum configured %u bytes.", Length, USB_CORE_ENDPOINT_PACKETS_SIZE);
-		Length = USB_CORE_ENDPOINT_PACKETS_SIZE;
+		Adjusted_Length = USB_CORE_ENDPOINT_PACKETS_SIZE;
 	}
 
 	// Find the requested configuration
@@ -142,23 +143,23 @@ static inline void USBCoreProcessGetConfigurationDescriptor(unsigned char Config
 	USB_CORE_MEMCPY(Pointer_Endpoint_Descriptor_Buffer, Pointer_Configuration_Descriptor, USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION);
 
 	// Append the interfaces if asked to
-	if (Length > USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION)
+	if (Adjusted_Length > USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION)
 	{
 		Pointer_Endpoint_Descriptor_Buffer += USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION;
 		LOG(USB_CORE_IS_LOGGING_ENABLED, "The configuration descriptor has %u interfaces, its total length is %u bytes.", Pointer_Configuration_Descriptor->bNumInterfaces, Pointer_Configuration_Descriptor->wTotalLength);
 
 		// Make sure only no more bytes than contained in the descriptor are transmitted
-		if (Length > Pointer_Configuration_Descriptor->wTotalLength)
+		if (Adjusted_Length > Pointer_Configuration_Descriptor->wTotalLength)
 		{
-			Length = (unsigned char) Pointer_Configuration_Descriptor->wTotalLength;
+			Adjusted_Length = (unsigned char) Pointer_Configuration_Descriptor->wTotalLength;
 			LOG(USB_CORE_IS_LOGGING_ENABLED, "The requested length is greater than the descriptor length, adjusting the requested length.");
 		}
 
 		// Append all interface descriptors
-		USB_CORE_MEMCPY(Pointer_Endpoint_Descriptor_Buffer, Pointer_Configuration_Descriptor->Pointer_Interfaces_Data, Length - USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION);
+		USB_CORE_MEMCPY(Pointer_Endpoint_Descriptor_Buffer, Pointer_Configuration_Descriptor->Pointer_Interfaces_Data, Adjusted_Length - USB_CORE_DESCRIPTOR_SIZE_CONFIGURATION);
 	}
 
-	USBCorePrepareForInTransfer(0, NULL, Length, 1);
+	USBCorePrepareForInTransfer(0, NULL, Adjusted_Length, 1);
 }
 
 /** Send to the host the expected amount of string data. This function takes care of preparing the appropriate control pipe IN transfer.
@@ -504,7 +505,7 @@ void USBCoreInterruptHandler(void)
 							switch (Descriptor_Type)
 							{
 								case USB_CORE_DESCRIPTOR_TYPE_CONFIGURATION:
-									USBCoreProcessGetConfigurationDescriptor(Descriptor_Index, (unsigned char) Pointer_Device_Request->wLength);
+									USBCoreProcessGetConfigurationDescriptor(Descriptor_Index, Pointer_Device_Request->wLength);
 									USBCorePrepareForOutTransfer(0, 0); // Re-enable packets reception
 									break;
 
