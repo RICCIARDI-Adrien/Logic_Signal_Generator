@@ -167,19 +167,33 @@ void USBCommunicationsInitialize(unsigned char Data_In_Endpoint_ID)
 void USBCommunicationsWriteString(char *Pointer_String)
 {
 	size_t Length;
+	unsigned char Chunk_Length;
 
-	// Send the string in chunks if its size exceeds the USB packet size
+	// Cache the string length
 	Length = strlen(Pointer_String);
 	LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Writing the string \"%s\" made of %u bytes.", Pointer_String, Length);
 
-	// Wait for the previous transmission to end
-	while (!USB_Communications_Is_Transmission_Finished);
-	USB_Communications_Is_Transmission_Finished = 0;
+	// Send the string in chunks if its size exceeds the USB packet size
+	while (Length > 0)
+	{
+		// Wait for the previous transmission to end
+		while (!USB_Communications_Is_Transmission_Finished);
+		USB_Communications_Is_Transmission_Finished = 0;
 
-	// Provide the next chunk of data to transmit
-	USBCorePrepareForInTransfer(USB_Communications_Data_In_Endpoint_ID, Pointer_String, (unsigned char) Length, USB_Communications_Data_In_Endpoint_Data_Synchronization);
+		// Split the data in chunks if needed
+		if (Length > USB_CORE_ENDPOINT_PACKETS_SIZE) Chunk_Length = USB_CORE_ENDPOINT_PACKETS_SIZE;
+		else Chunk_Length = (unsigned char) Length;
+		LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Sending a data chunk of %u bytes.", Chunk_Length);
 
-	// Update the synchronization value
-	if (USB_Communications_Data_In_Endpoint_Data_Synchronization == 0) USB_Communications_Data_In_Endpoint_Data_Synchronization = 1;
-	else USB_Communications_Data_In_Endpoint_Data_Synchronization = 0;
+		// Provide the next chunk of data to transmit
+		USBCorePrepareForInTransfer(USB_Communications_Data_In_Endpoint_ID, Pointer_String, Chunk_Length, USB_Communications_Data_In_Endpoint_Data_Synchronization);
+
+		// Update the synchronization value
+		if (USB_Communications_Data_In_Endpoint_Data_Synchronization == 0) USB_Communications_Data_In_Endpoint_Data_Synchronization = 1;
+		else USB_Communications_Data_In_Endpoint_Data_Synchronization = 0;
+
+		// Prepare for the next chunk transmission
+		Pointer_String += Chunk_Length;
+		Length -= Chunk_Length;
+	}
 }
