@@ -64,9 +64,26 @@ typedef struct
 //-------------------------------------------------------------------------------------------------
 // Functions
 //-------------------------------------------------------------------------------------------------
+// Protocol callbacks
 /** Process a CDC ACM control request.
  * @param Pointer_Transfer_Callback_Data The request data.
  */
-void USBCommunicationsHandleControlRequest(TUSBCoreHardwareEndpointOutTransferCallbackData *Pointer_Transfer_Callback_Data);
+void USBCommunicationsHandleControlRequestCallback(TUSBCoreHardwareEndpointOutTransferCallbackData *Pointer_Transfer_Callback_Data);
+
+/** Needs to be called by the IN callback of the CDC ACM data IN endpoint, in order to know when a data chunk has been fully transmitted.
+ * @param Endpoint_ID The CDC ACM data IN endpoint number, which is not used here.
+ */
+void USBCommunicationsHandleTransmissionFlowControlCallback(unsigned char Endpoint_ID);
+
+// User-callable functions
+/** Cache some useful USB CDC ACM settings.
+ * @param Data_In_Endpoint_ID The CDC ACM data IN endpoint number.
+ */
+void USBCommunicationsInitialize(unsigned char Data_In_Endpoint_ID);
+
+/** Transmit an ASCIIZ string of data to the host.
+ * @param Pointer_String The string to transmit, which must be terminated by a 0.
+ */
+void USBCommunicationsWriteString(char *Pointer_String);
 
 #endif

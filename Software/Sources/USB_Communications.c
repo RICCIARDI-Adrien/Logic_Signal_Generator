@@ -3,6 +3,7 @@
  * @author Adrien RICCIARDI
  */
 #include <Log.h>
+#include <string.h>
 #include <USB_Communications.h>
 
 //-------------------------------------------------------------------------------------------------
@@ -31,9 +32,20 @@ typedef struct
 } __attribute__((packed)) TUSBCommunicationsPSTNRequestGetLineCodingPayload;
 
 //-------------------------------------------------------------------------------------------------
+// Private variables
+//-------------------------------------------------------------------------------------------------
+/** Cache the number corresponding to the data IN endpoint. */
+static unsigned char USB_Communications_Data_In_Endpoint_ID;
+/** Keep the data synchronization value for the data IN endpoint communication. */
+static unsigned char USB_Communications_Data_In_Endpoint_Data_Synchronization = 0;
+
+/** A synchronization flag telling whether the data transmission path is ready. */
+static volatile unsigned char USB_Communications_Is_Transmission_Finished = 1; // No transmission has taken place yet
+
+//-------------------------------------------------------------------------------------------------
 // Public functions
 //-------------------------------------------------------------------------------------------------
-void USBCommunicationsHandleControlRequest(TUSBCoreHardwareEndpointOutTransferCallbackData *Pointer_Transfer_Callback_Data)
+void USBCommunicationsHandleControlRequestCallback(TUSBCoreHardwareEndpointOutTransferCallbackData *Pointer_Transfer_Callback_Data)
 {
 	typedef enum
 	{
@@ -77,7 +89,7 @@ void USBCommunicationsHandleControlRequest(TUSBCoreHardwareEndpointOutTransferCa
 					break;
 
 				default:
-					LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Unsupported request %u.", Last_Request_Code);
+					LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Unsupported request 0x%02X.", Last_Request_Code);
 					break;
 			}
 		}
@@ -129,7 +141,7 @@ void USBCommunicationsHandleControlRequest(TUSBCoreHardwareEndpointOutTransferCa
 				break;
 
 			default:
-				LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Unsupported request %u.", Last_Request_Code);
+				LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Unsupported request 0x%02X.", Last_Request_Code);
 				break;
 		}
 
@@ -140,4 +152,34 @@ void USBCommunicationsHandleControlRequest(TUSBCoreHardwareEndpointOutTransferCa
 	// Manage the USB connection
 	USBCorePrepareForInTransfer(Pointer_Transfer_Callback_Data->Endpoint_ID, NULL, 0, 1); // Send back an empty packet to acknowledge the command reception
 	USBCorePrepareForOutTransfer(Pointer_Transfer_Callback_Data->Endpoint_ID, 0); // Re-enable packets reception
+}
+
+void USBCommunicationsHandleTransmissionFlowControlCallback(unsigned char __attribute__((unused)) Endpoint_ID)
+{
+	USB_Communications_Is_Transmission_Finished = 1;
+}
+
+void USBCommunicationsInitialize(unsigned char Data_In_Endpoint_ID)
+{
+	USB_Communications_Data_In_Endpoint_ID = Data_In_Endpoint_ID;
+}
+
+void USBCommunicationsWriteString(char *Pointer_String)
+{
+	size_t Length;
+
+	// Send the string in chunks if its size exceeds the USB packet size
+	Length = strlen(Pointer_String);
+	LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Writing the string \"%s\" made of %u bytes.", Pointer_String, Length);
+
+	// Wait for the previous transmission to end
+	while (!USB_Communications_Is_Transmission_Finished);
+	USB_Communications_Is_Transmission_Finished = 0;
+
+	// Provide the next chunk of data to transmit
+	USBCorePrepareForInTransfer(USB_Communications_Data_In_Endpoint_ID, Pointer_String, (unsigned char) Length, USB_Communications_Data_In_Endpoint_Data_Synchronization);
+
+	// Update the synchronization value
+	if (USB_Communications_Data_In_Endpoint_Data_Synchronization == 0) USB_Communications_Data_In_Endpoint_Data_Synchronization = 1;
+	else USB_Communications_Data_In_Endpoint_Data_Synchronization = 0;
 }

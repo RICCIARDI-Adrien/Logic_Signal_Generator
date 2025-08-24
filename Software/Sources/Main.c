@@ -190,19 +190,13 @@ static void MainSimpleEcho(TUSBCoreHardwareEndpointOutTransferCallbackData *Poin
 	USBCorePrepareForInTransfer(3, Pointer_Transfer_Callback_Data->Pointer_OUT_Data_Buffer, Pointer_Transfer_Callback_Data->Data_Size, Sync ? 0 : 1);
 }
 
-// TEST
-static void MainSimpleEchoFlowControl(unsigned char Endpoint_ID)
-{
-	LOG(1, "ACK %u", Endpoint_ID);
-}
-
 /** Each used hardware USB endpoint configuration. */
 static TUSBCoreHardwareEndpointConfiguration Main_USB_Hardware_Endpoints_Configuration[] =
 {
 	// Control endpoint
 	{
 		.Enabled_Directions = USB_CORE_HARDWARE_ENDPOINT_DIRECTION_OUT | USB_CORE_HARDWARE_ENDPOINT_DIRECTION_IN,
-		.Out_Transfer_Callback = USBCommunicationsHandleControlRequest,
+		.Out_Transfer_Callback = USBCommunicationsHandleControlRequestCallback,
 		.In_Transfer_Callback = NULL
 	},
 	// CDC ACM notification
@@ -221,7 +215,7 @@ static TUSBCoreHardwareEndpointConfiguration Main_USB_Hardware_Endpoints_Configu
 	{
 		.Enabled_Directions = USB_CORE_HARDWARE_ENDPOINT_DIRECTION_OUT | USB_CORE_HARDWARE_ENDPOINT_DIRECTION_IN,
 		.Out_Transfer_Callback = NULL,
-		.In_Transfer_Callback = MainSimpleEchoFlowControl
+		.In_Transfer_Callback = USBCommunicationsHandleTransmissionFlowControlCallback
 	}
 };
 
@@ -281,8 +275,15 @@ void main(void)
 
 	LOG(1, "\033[33mInitialization complete.\033[0m");
 
-	// Initialize the modules
+	// Initialize the USB stack now that all modules are operational
 	USBCoreInitialize(&Main_USB_Device_Descriptor);
+	USBCommunicationsInitialize(3);
+
+	// TEST
+	for (int i = 0; i < 10; i++) __delay_ms(1000);
+	USBCommunicationsWriteString("Ceci est un test de chaîne\r\n");
+	USBCommunicationsWriteString("Voici la seconde chaîne\r\n");
+	USBCommunicationsWriteString("Et ceci est la troisième et dernière chaîne\r\n");
 
 	// TEST
 	ANSELBbits.ANSB2 = 0;
