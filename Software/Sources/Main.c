@@ -175,21 +175,6 @@ static const TUSBCoreDescriptorConfiguration Main_USB_Configuration_Descriptor =
 	.Pointer_Interfaces_Data = &Main_USB_Communications_Class_Specific_Endpoint_Descriptors
 };
 
-// TEST
-static void MainSimpleEcho(TUSBCoreHardwareEndpointOutTransferCallbackData *Pointer_Transfer_Callback_Data)
-{
-	static unsigned char Sync = 1;
-
-	LOG(1, "reception");
-
-	// Manage the USB connection
-	USBCorePrepareForOutTransfer(Pointer_Transfer_Callback_Data->Endpoint_ID, Sync); // Re-enable packets reception
-	if (Sync == 0) Sync = 1;
-	else Sync = 0;
-
-	USBCorePrepareForInTransfer(3, Pointer_Transfer_Callback_Data->Pointer_OUT_Data_Buffer, Pointer_Transfer_Callback_Data->Data_Size, Sync ? 0 : 1);
-}
-
 /** Each used hardware USB endpoint configuration. */
 static TUSBCoreHardwareEndpointConfiguration Main_USB_Hardware_Endpoints_Configuration[] =
 {
@@ -208,14 +193,14 @@ static TUSBCoreHardwareEndpointConfiguration Main_USB_Hardware_Endpoints_Configu
 	// CDC ACM data OUT
 	{
 		.Enabled_Directions = USB_CORE_HARDWARE_ENDPOINT_DIRECTION_OUT,
-		.Out_Transfer_Callback = MainSimpleEcho, // Only this endpoint can receive data
+		.Out_Transfer_Callback = USBCommunicationsHandleDataReceptionCallback, // Only this endpoint can receive user data
 		.In_Transfer_Callback = NULL
 	},
 	// CDC ACM data IN
 	{
 		.Enabled_Directions = USB_CORE_HARDWARE_ENDPOINT_DIRECTION_OUT | USB_CORE_HARDWARE_ENDPOINT_DIRECTION_IN,
 		.Out_Transfer_Callback = NULL,
-		.In_Transfer_Callback = USBCommunicationsHandleTransmissionFlowControlCallback
+		.In_Transfer_Callback = USBCommunicationsHandleDataTransmissionFlowControlCallback
 	}
 };
 

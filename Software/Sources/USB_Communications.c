@@ -12,6 +12,9 @@
 /** Set to 1 to enable the log messages, set to 0 to disable them. */
 #define USB_COMMUNICATIONS_IS_LOGGING_ENABLED 1
 
+/** The size in bytes of the reception circular buffer. */
+#define USB_COMMUNICATIONS_DATA_RECEPTION_BUFFER_SIZE 8 // TODO start with a small buffer to assert the performances
+
 //-------------------------------------------------------------------------------------------------
 // Private types
 //-------------------------------------------------------------------------------------------------
@@ -34,10 +37,22 @@ typedef struct
 //-------------------------------------------------------------------------------------------------
 // Private variables
 //-------------------------------------------------------------------------------------------------
+/** Keep the data synchronization value for the data OUT endpoint communication. */
+static unsigned char USB_Communications_Data_Out_Endpoint_Data_Synchronization = 0;
+
 /** Cache the number corresponding to the data IN endpoint. */
 static unsigned char USB_Communications_Data_In_Endpoint_ID;
 /** Keep the data synchronization value for the data IN endpoint communication. */
 static unsigned char USB_Communications_Data_In_Endpoint_Data_Synchronization = 0;
+
+/** Store the last received data bytes. */
+static unsigned char USB_Communications_Data_Reception_Buffer[USB_COMMUNICATIONS_DATA_RECEPTION_BUFFER_SIZE];
+/** The beginning of the received data that are not yet read by the user. */
+static unsigned char *Pointer_USB_Communications_Data_Reception_Buffer_Reading = USB_Communications_Data_Reception_Buffer;
+/** The beginning of the buffer free area to write incoming data to. */
+static unsigned char *Pointer_USB_Communications_Data_Reception_Buffer_Writing = USB_Communications_Data_Reception_Buffer;
+/** The occupancy of the buffer. */
+static unsigned char USB_Communications_Data_Reception_Buffer_Occupied_Bytes_Count = 0;
 
 /** A synchronization flag telling whether the data transmission path is ready. */
 static volatile unsigned char USB_Communications_Is_Transmission_Finished = 1; // No transmission has taken place yet
@@ -154,7 +169,42 @@ void USBCommunicationsHandleControlRequestCallback(TUSBCoreHardwareEndpointOutTr
 	USBCorePrepareForOutTransfer(Pointer_Transfer_Callback_Data->Endpoint_ID, 0); // Re-enable packets reception
 }
 
-void USBCommunicationsHandleTransmissionFlowControlCallback(unsigned char __attribute__((unused)) Endpoint_ID)
+void USBCommunicationsHandleDataReceptionCallback(TUSBCoreHardwareEndpointOutTransferCallbackData *Pointer_Transfer_Callback_Data)
+{
+	// Cache the callback data parameters to avoid useless pointer computations in the loop
+	unsigned char Received_Bytes_Count = Pointer_Transfer_Callback_Data->Data_Size, *Pointer_Received_Data_Buffer = Pointer_Transfer_Callback_Data->Pointer_OUT_Data_Buffer;
+
+	LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Received %u bytes of data.", Received_Bytes_Count);
+
+	// Atomic access to the shared FIFO is granted by the fact that the user-callable function temporarily disables the USB interrupts, so it is not possible to reach this code at the critical moment
+	// Append the received data if there is still room in the buffer
+	if (USB_Communications_Data_Reception_Buffer_Occupied_Bytes_Count < USB_COMMUNICATIONS_DATA_RECEPTION_BUFFER_SIZE)
+	{
+		// Append the received data until the reception buffer is full or all data have been appended
+		while ((Received_Bytes_Count > 0) && (USB_Communications_Data_Reception_Buffer_Occupied_Bytes_Count < USB_COMMUNICATIONS_DATA_RECEPTION_BUFFER_SIZE))
+		{
+			// Wrap around the pointer to the beginning of the buffer when it has reached the end of the buffer in a minimum amount of cycles
+			if (Pointer_USB_Communications_Data_Reception_Buffer_Writing == (USB_Communications_Data_Reception_Buffer + USB_COMMUNICATIONS_DATA_RECEPTION_BUFFER_SIZE)) Pointer_USB_Communications_Data_Reception_Buffer_Writing = USB_Communications_Data_Reception_Buffer;
+
+			// Store the next received byte into the buffer
+			*Pointer_USB_Communications_Data_Reception_Buffer_Writing = *Pointer_Received_Data_Buffer;
+			Pointer_USB_Communications_Data_Reception_Buffer_Writing++;
+			Pointer_Received_Data_Buffer++;
+			USB_Communications_Data_Reception_Buffer_Occupied_Bytes_Count++;
+			Received_Bytes_Count--;
+		}
+	}
+	else LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Warning : the reception buffer is full, all the received data have been discarded.");
+
+	// Re-enable packets reception
+	USBCorePrepareForOutTransfer(Pointer_Transfer_Callback_Data->Endpoint_ID, USB_Communications_Data_Out_Endpoint_Data_Synchronization);
+
+	// Update the synchronization value
+	if (USB_Communications_Data_Out_Endpoint_Data_Synchronization == 0) USB_Communications_Data_Out_Endpoint_Data_Synchronization = 1;
+	else USB_Communications_Data_Out_Endpoint_Data_Synchronization = 0;
+}
+
+void USBCommunicationsHandleDataTransmissionFlowControlCallback(unsigned char __attribute__((unused)) Endpoint_ID)
 {
 	USB_Communications_Is_Transmission_Finished = 1;
 }

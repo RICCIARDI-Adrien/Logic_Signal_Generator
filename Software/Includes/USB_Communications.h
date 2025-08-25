@@ -70,10 +70,15 @@ typedef struct
  */
 void USBCommunicationsHandleControlRequestCallback(TUSBCoreHardwareEndpointOutTransferCallbackData *Pointer_Transfer_Callback_Data);
 
+/** Needs to be called by the OUT callback of the CDC ACM data OUT endpoint to fetch the received data.
+ * @param Pointer_Transfer_Callback_Data The request data.
+ */
+void USBCommunicationsHandleDataReceptionCallback(TUSBCoreHardwareEndpointOutTransferCallbackData *Pointer_Transfer_Callback_Data);
+
 /** Needs to be called by the IN callback of the CDC ACM data IN endpoint, in order to know when a data chunk has been fully transmitted.
  * @param Endpoint_ID The CDC ACM data IN endpoint number, which is not used here.
  */
-void USBCommunicationsHandleTransmissionFlowControlCallback(unsigned char Endpoint_ID);
+void USBCommunicationsHandleDataTransmissionFlowControlCallback(unsigned char Endpoint_ID);
 
 // User-callable functions
 /** Cache some useful USB CDC ACM settings.
