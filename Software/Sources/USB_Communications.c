@@ -3,7 +3,6 @@
  * @author Adrien RICCIARDI
  */
 #include <Log.h>
-#include <string.h>
 #include <USB_Communications.h>
 
 //-------------------------------------------------------------------------------------------------
@@ -253,11 +252,16 @@ void USBCommunicationsWriteCharacter(char Character)
 
 void USBCommunicationsWriteString(char *Pointer_String)
 {
-	size_t Length;
+	unsigned short Length = 0;
 	unsigned char Chunk_Length;
+	char *Pointer_String_Temporary = Pointer_String;
 
 	// Cache the string length
-	Length = strlen(Pointer_String);
+	while (*Pointer_String_Temporary != 0)
+	{
+		Length++;
+		Pointer_String_Temporary++;
+	}
 	LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Writing the string \"%s\" made of %u bytes.", Pointer_String, Length);
 
 	// Send the string in chunks if its size exceeds the USB packet size
