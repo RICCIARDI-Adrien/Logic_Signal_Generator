@@ -264,12 +264,13 @@ void main(void)
 	USBCoreInitialize(&Main_USB_Device_Descriptor);
 	USBCommunicationsInitialize(3);
 
-	// TEST
-	for (int i = 0; i < 10; i++) __delay_ms(1000);
-	USBCommunicationsWriteString("Ceci est un test de chaîne\r\n");
-	USBCommunicationsWriteString("Voici la seconde chaîne\r\n");
-	USBCommunicationsWriteString("Et ceci est la troisième et dernière chaîne\r\n");
-	USBCommunicationsWriteString("Ou pas, cette chaîne a une longueur excédant soixante-quatre caractères, ainsi que plusieurs accents et autres mots inutiles dans le but unique d'augmenter artificiellement et facilement ladite longueur afin de tester un transfert de multiples parties, voire même de dépasser la taille d'un octet pour stocker la taille en question.\r\n");
+	while (1)
+	{
+		char Character;
+
+		Character = USBCommunicationsReadCharacter();
+		LOG(1, "char %c\r\n", Character);
+	}
 
 	// TEST
 	ANSELBbits.ANSB2 = 0;

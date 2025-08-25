@@ -38,7 +38,7 @@ typedef struct
 // Private variables
 //-------------------------------------------------------------------------------------------------
 /** Keep the data synchronization value for the data OUT endpoint communication. */
-static unsigned char USB_Communications_Data_Out_Endpoint_Data_Synchronization = 0;
+static unsigned char USB_Communications_Data_Out_Endpoint_Data_Synchronization = 1; // The first packet sent by the host has the synchronization value 0, so expect a 1 for the next packet
 
 /** Cache the number corresponding to the data IN endpoint. */
 static unsigned char USB_Communications_Data_In_Endpoint_ID;
@@ -52,7 +52,7 @@ static unsigned char *Pointer_USB_Communications_Data_Reception_Buffer_Reading =
 /** The beginning of the buffer free area to write incoming data to. */
 static unsigned char *Pointer_USB_Communications_Data_Reception_Buffer_Writing = USB_Communications_Data_Reception_Buffer;
 /** The occupancy of the buffer. */
-static unsigned char USB_Communications_Data_Reception_Buffer_Occupied_Bytes_Count = 0;
+static volatile unsigned char USB_Communications_Data_Reception_Buffer_Occupied_Bytes_Count = 0;
 
 /** A synchronization flag telling whether the data transmission path is ready. */
 static volatile unsigned char USB_Communications_Is_Transmission_Finished = 1; // No transmission has taken place yet
@@ -212,6 +212,27 @@ void USBCommunicationsHandleDataTransmissionFlowControlCallback(unsigned char __
 void USBCommunicationsInitialize(unsigned char Data_In_Endpoint_ID)
 {
 	USB_Communications_Data_In_Endpoint_ID = Data_In_Endpoint_ID;
+}
+
+char USBCommunicationsReadCharacter(void)
+{
+	unsigned char Character;
+
+	// Wait for a character to be received
+	// Accessing the occupied bytes count single-byte variable without the atomic access protections is safe because this is just a read, doing this avoids disabling the USB interrupts for too long
+	while (USB_Communications_Data_Reception_Buffer_Occupied_Bytes_Count == 0);
+
+	// Wrap around the pointer to the beginning of the buffer when it has reached the end of the buffer in a minimum amount of cycles, this can alse be done without atomic access protections because only this function is accessing this pointer value
+	if (Pointer_USB_Communications_Data_Reception_Buffer_Reading == (USB_Communications_Data_Reception_Buffer + USB_COMMUNICATIONS_DATA_RECEPTION_BUFFER_SIZE)) Pointer_USB_Communications_Data_Reception_Buffer_Reading = USB_Communications_Data_Reception_Buffer;
+
+	// Atomically access to the reception circular buffer
+	USB_CORE_INTERRUPT_DISABLE();
+	Character = *Pointer_USB_Communications_Data_Reception_Buffer_Reading;
+	Pointer_USB_Communications_Data_Reception_Buffer_Reading++;
+	USB_Communications_Data_Reception_Buffer_Occupied_Bytes_Count--;
+	USB_CORE_INTERRUPT_ENABLE();
+
+	return (char) Character;
 }
 
 void USBCommunicationsWriteCharacter(char Character)

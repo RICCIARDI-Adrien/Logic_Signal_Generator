@@ -86,6 +86,11 @@ void USBCommunicationsHandleDataTransmissionFlowControlCallback(unsigned char En
  */
 void USBCommunicationsInitialize(unsigned char Data_In_Endpoint_ID);
 
+/** Block until a character is received.
+ * @return The ASCII code of the received character.
+ */
+char USBCommunicationsReadCharacter(void);
+
 /** Transmit a single-byte ASCII character to the host.
  * @param Character The character ASCII code.
  */
