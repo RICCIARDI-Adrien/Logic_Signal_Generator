@@ -56,6 +56,9 @@ static volatile unsigned char USB_Communications_Data_Reception_Buffer_Occupied_
 /** A synchronization flag telling whether the data transmission path is ready. */
 static volatile unsigned char USB_Communications_Is_Transmission_Finished = 1; // No transmission has taken place yet
 
+/** Tell wether the CDC ACM link is configured by the host and operational. */
+static unsigned char USB_Communications_Is_Connection_Established = 0;
+
 //-------------------------------------------------------------------------------------------------
 // Public functions
 //-------------------------------------------------------------------------------------------------
@@ -100,6 +103,9 @@ void USBCommunicationsHandleControlRequestCallback(TUSBCoreHardwareEndpointOutTr
 				case USB_COMMUNICATIONS_PSTN_REQUEST_CODE_SET_CONTROL_LINE_STATE:
 					// This request is ignored
 					LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Processing the Set Control Line State PSTN request.");
+
+					// The Linux most common TTY programs (Picocom, Minicom etc) seem to send the Set Control Line State request at the end, when everything is ready
+					USB_Communications_Is_Connection_Established = 1;
 					break;
 
 				default:
@@ -211,6 +217,11 @@ void USBCommunicationsHandleDataTransmissionFlowControlCallback(unsigned char __
 void USBCommunicationsInitialize(unsigned char Data_In_Endpoint_ID)
 {
 	USB_Communications_Data_In_Endpoint_ID = Data_In_Endpoint_ID;
+}
+
+unsigned char USBCommunicationsIsCommunicationEstablished(void)
+{
+	return USB_Communications_Is_Connection_Established;
 }
 
 char USBCommunicationsReadCharacter(void)

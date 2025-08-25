@@ -86,6 +86,12 @@ void USBCommunicationsHandleDataTransmissionFlowControlCallback(unsigned char En
  */
 void USBCommunicationsInitialize(unsigned char Data_In_Endpoint_ID);
 
+/** Check wether the CDC ACM link is configured by the host and operational.
+ * @return 0 if the host is not connected yet,
+ * @return 1 if the host is connected.
+ */
+unsigned char USBCommunicationsIsCommunicationEstablished(void);
+
 /** Block until a character is received.
  * @return The ASCII code of the received character.
  */

@@ -267,6 +267,10 @@ void main(void)
 	USBCoreInitialize(&Main_USB_Device_Descriptor);
 	USBCommunicationsInitialize(3);
 
+	// Wait until the host has configured the CDC ACM link
+	while (!USBCommunicationsIsCommunicationEstablished());
+	__delay_ms(100); // Give a bit of delay to finalize the USB CDC ACM configuration
+
 	while (1)
 	{
 		ShellReadCommandLine(String_Command_Line, sizeof(String_Command_Line));
