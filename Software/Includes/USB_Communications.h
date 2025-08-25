@@ -81,6 +81,11 @@ void USBCommunicationsHandleTransmissionFlowControlCallback(unsigned char Endpoi
  */
 void USBCommunicationsInitialize(unsigned char Data_In_Endpoint_ID);
 
+/** Transmit a single-byte ASCII character to the host.
+ * @param Character The character ASCII code.
+ */
+void USBCommunicationsWriteCharacter(char Character);
+
 /** Transmit an ASCIIZ string of data to the host.
  * @param Pointer_String The string to transmit, which must be terminated by a 0.
  */

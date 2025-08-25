@@ -164,6 +164,22 @@ void USBCommunicationsInitialize(unsigned char Data_In_Endpoint_ID)
 	USB_Communications_Data_In_Endpoint_ID = Data_In_Endpoint_ID;
 }
 
+void USBCommunicationsWriteCharacter(char Character)
+{
+	LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Writing the character '%c'.", Character);
+
+	// Wait for the previous transmission to end
+	while (!USB_Communications_Is_Transmission_Finished);
+	USB_Communications_Is_Transmission_Finished = 0;
+
+	// Provide the next chunk of data to transmit
+	USBCorePrepareForInTransfer(USB_Communications_Data_In_Endpoint_ID, &Character, 1, USB_Communications_Data_In_Endpoint_Data_Synchronization);
+
+	// Update the synchronization value
+	if (USB_Communications_Data_In_Endpoint_Data_Synchronization == 0) USB_Communications_Data_In_Endpoint_Data_Synchronization = 1;
+	else USB_Communications_Data_In_Endpoint_Data_Synchronization = 0;
+}
+
 void USBCommunicationsWriteString(char *Pointer_String)
 {
 	size_t Length;
