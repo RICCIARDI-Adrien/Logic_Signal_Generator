@@ -3,6 +3,7 @@
  * @author Adrien RICCIARDI
  */
 #include <Log.h>
+#include <Shell.h>
 #include <UART.h>
 #include <USB_Communications.h>
 #include <xc.h>
@@ -247,6 +248,8 @@ void __interrupt(low_priority) MainInterruptHandlerLowPriority(void)
 //-------------------------------------------------------------------------------------------------
 void main(void)
 {
+	char String_Command_Line[USB_CORE_ENDPOINT_PACKETS_SIZE + 1]; // Using the USB packet size grants that the entered command line will fit in a single packet and no data byte can be lost during a copy, the +1 is to make room for the terminating zero
+
 	// Configure the system clock at 48MHz
 	OSCCON = 0x70; // Select a 16MHz frequency output for the internal oscillator, select the primary clock configured by the fuses (which is the internal oscillator)
 	__delay_ms(10); // Add a little delay to make sure that the PLL is locked (2ms should be enough, but take some margin)
@@ -266,10 +269,8 @@ void main(void)
 
 	while (1)
 	{
-		char Character;
-
-		Character = USBCommunicationsReadCharacter();
-		LOG(1, "char %c\r\n", Character);
+		ShellReadCommandLine(String_Command_Line, sizeof(String_Command_Line));
+		LOG(1, "Command line : %s", String_Command_Line);
 	}
 
 	// TEST
