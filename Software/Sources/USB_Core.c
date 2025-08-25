@@ -263,7 +263,7 @@ void USBCoreInitialize(const TUSBCoreDescriptorDevice *Pointer_Device_Descriptor
 	UEP0 = 0x16; // Enable endpoint handshake, allow control transfers, enable the endpoint OUT and IN directions
 
 	// Configure the interrupts
-	PIE3bits.USBIE = 1; // Enable the USB peripheral global interrupt
+	USB_CORE_INTERRUPT_ENABLE(); // Enable the USB peripheral global interrupt
 	UIE = 0x29; // Enable the STALL Handshake, the Transaction Complete and the Reset interrupts
 	IPR3bits.USBIP = 1; // Set the USB interrupt as high priority
 

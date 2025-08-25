@@ -72,6 +72,12 @@
 	} \
 }
 
+/** Disable the USB interrupt. */
+#define USB_CORE_INTERRUPT_DISABLE() PIE3bits.USBIE = 0
+
+/** Enable the USB interrupt. */
+#define USB_CORE_INTERRUPT_ENABLE() PIE3bits.USBIE = 1
+
 //-------------------------------------------------------------------------------------------------
 // Types
 //-------------------------------------------------------------------------------------------------
