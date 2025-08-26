@@ -11,8 +11,9 @@ SOURCES = \
 	$(PATH_SOURCES)/Main.c \
 	$(PATH_SOURCES)/MSSP.c \
 	$(PATH_SOURCES)/Shell.c \
-	$(PATH_SOURCES)/Shell_Commands.c \
 	$(PATH_SOURCES)/Shell_Command_Help.c \
+	$(PATH_SOURCES)/Shell_Command_I2C.c \
+	$(PATH_SOURCES)/Shell_Commands.c \
 	$(PATH_SOURCES)/UART.c \
 	$(PATH_SOURCES)/USB_Communications.c \
 	$(PATH_SOURCES)/USB_Core.c
