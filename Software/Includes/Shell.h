@@ -5,6 +5,8 @@
 #ifndef H_SHELL_H
 #define H_SHELL_H
 
+#include <Shell_Commands.h>
+
 //-------------------------------------------------------------------------------------------------
 // Functions
 //-------------------------------------------------------------------------------------------------
@@ -22,5 +24,13 @@ void ShellReadCommandLine(char *Pointer_String_Command_Line, unsigned char Maxim
  * @note A token size is currently to limited to 255 bytes.
  */
 char *ShellExtractNextToken(char *Pointer_String_Command_Line, unsigned char *Pointer_Token_Length);
+
+/** Determine which command the user has typed in the shell and execute it.
+ * @param Pointer_String_Command_Line The command line as retrieved by ShellReadCommandLine().
+ * @return 0 if the command was successfully executed,
+ * @return 1 if no matching command was found,
+ * @return 2 if the command was found but its execution callback was missing.
+ */
+unsigned char ShellProcessCommand(char *Pointer_String_Command_Line);
 
 #endif

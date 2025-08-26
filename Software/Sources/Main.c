@@ -249,6 +249,7 @@ void __interrupt(low_priority) MainInterruptHandlerLowPriority(void)
 void main(void)
 {
 	char String_Command_Line[USB_CORE_ENDPOINT_PACKETS_SIZE + 1]; // Using the USB packet size grants that the entered command line will fit in a single packet and no data byte can be lost during a copy, the +1 is to make room for the terminating zero
+	unsigned char Result;
 
 	// Configure the system clock at 48MHz
 	OSCCON = 0x70; // Select a 16MHz frequency output for the internal oscillator, select the primary clock configured by the fuses (which is the internal oscillator)
@@ -274,20 +275,8 @@ void main(void)
 	while (1)
 	{
 		ShellReadCommandLine(String_Command_Line, sizeof(String_Command_Line));
-
-		// TEST
-		{
-			unsigned char len = 0;
-			char *tok;
-
-			LOG(1, "Command line : %s", String_Command_Line);
-			tok = ShellExtractNextToken(String_Command_Line, &len);
-			LOG(1, "premier token : %s, taille %u", tok, len);
-			tok = ShellExtractNextToken(tok, &len);
-			LOG(1, "deuxième token : %s, taille %u", tok, len);
-			tok = ShellExtractNextToken(tok, &len);
-			LOG(1, "troisième token : %s, taille %u", tok, len);
-		}
+		Result = ShellProcessCommand(String_Command_Line);
+		if (Result == 1) USBCommunicationsWriteString("\r\nUnknown command.");
 	}
 
 	// TEST

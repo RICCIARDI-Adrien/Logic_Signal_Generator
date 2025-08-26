@@ -10,6 +10,7 @@ SOURCES = \
 	$(PATH_SOURCES)/Log.c \
 	$(PATH_SOURCES)/Main.c \
 	$(PATH_SOURCES)/Shell.c \
+	$(PATH_SOURCES)/Shell_Commands.c \
 	$(PATH_SOURCES)/UART.c \
 	$(PATH_SOURCES)/USB_Communications.c \
 	$(PATH_SOURCES)/USB_Core.c

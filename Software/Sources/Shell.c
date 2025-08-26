@@ -4,6 +4,7 @@
  */
 #include <Log.h>
 #include <Shell.h>
+#include <string.h>
 #include <USB_Communications.h>
 
 //-------------------------------------------------------------------------------------------------
@@ -142,4 +143,41 @@ char *ShellExtractNextToken(char *Pointer_String_Command_Line, unsigned char *Po
 		Pointer_String_Command_Line++;
 		Length++;
 	}
+}
+
+unsigned char ShellProcessCommand(char *Pointer_String_Command_Line)
+{
+	char *Pointer_String_Command;
+	unsigned char Token_Length = 0, Command_Length, i;
+	const TShellCommand *Pointer_Commands = Shell_Commands;
+
+	// The first word is the command itself
+	Pointer_String_Command = ShellExtractNextToken(Pointer_String_Command_Line, &Token_Length);
+
+	// Try to match any known command
+	for (i = 0; i < SHELL_COMMANDS_COUNT; i++)
+	{
+		// Is it the right command ?
+		Command_Length = (unsigned char) strlen(Pointer_Commands->Pointer_String_Command); // No command can excess 255 bytes
+		if ((Command_Length == Token_Length) && (strncmp(Pointer_String_Command, Pointer_Commands->Pointer_String_Command, Command_Length) == 0))
+		{
+			LOG(SHELL_IS_LOGGING_ENABLED, "Found the matching command \"%s\", executing it.", Pointer_Commands->Pointer_String_Command);
+
+			// Run the command
+			if (Pointer_Commands->Command_Callback == NULL)
+			{
+				LOG(SHELL_IS_LOGGING_ENABLED, "Error : no command callback is provided, aborting.");
+				return 2;
+			}
+			// Provide the arguments list that point right after the command
+			Pointer_Commands->Command_Callback(Pointer_String_Command + Token_Length);
+
+			return 0;
+		}
+
+		Pointer_Commands++;
+	}
+
+	// No matching command was found
+	return 1;
 }
