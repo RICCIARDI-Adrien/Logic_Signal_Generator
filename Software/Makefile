@@ -9,6 +9,7 @@ BINARY_NAME = Logic_Signal_Generator.hex
 SOURCES = \
 	$(PATH_SOURCES)/Log.c \
 	$(PATH_SOURCES)/Main.c \
+	$(PATH_SOURCES)/MSSP.c \
 	$(PATH_SOURCES)/Shell.c \
 	$(PATH_SOURCES)/Shell_Commands.c \
 	$(PATH_SOURCES)/Shell_Command_Help.c \
