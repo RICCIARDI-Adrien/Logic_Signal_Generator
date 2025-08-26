@@ -274,7 +274,20 @@ void main(void)
 	while (1)
 	{
 		ShellReadCommandLine(String_Command_Line, sizeof(String_Command_Line));
-		LOG(1, "Command line : %s", String_Command_Line);
+
+		// TEST
+		{
+			unsigned char len = 0;
+			char *tok;
+
+			LOG(1, "Command line : %s", String_Command_Line);
+			tok = ShellExtractNextToken(String_Command_Line, &len);
+			LOG(1, "premier token : %s, taille %u", tok, len);
+			tok = ShellExtractNextToken(tok, &len);
+			LOG(1, "deuxième token : %s, taille %u", tok, len);
+			tok = ShellExtractNextToken(tok, &len);
+			LOG(1, "troisième token : %s, taille %u", tok, len);
+		}
 	}
 
 	// TEST

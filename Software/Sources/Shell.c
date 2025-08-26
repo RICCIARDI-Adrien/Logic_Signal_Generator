@@ -89,3 +89,57 @@ End:
 	// Terminate the string
 	*Pointer_String_Command_Line = 0;
 }
+
+char *ShellExtractNextToken(char *Pointer_String_Command_Line, unsigned char *Pointer_Token_Length)
+{
+	char Character, *Pointer_String_Token_Start;
+	unsigned char Length;
+
+	// Do nothing if the provided string is NULL
+	if (Pointer_String_Command_Line == NULL)
+	{
+		*Pointer_Token_Length = 0;
+		return NULL;
+	}
+
+	// Go to the specified string location in order to bypass a previously found token
+	Pointer_String_Command_Line += *Pointer_Token_Length;
+
+	// Remove the potential starting space characters
+	while (1)
+	{
+		// Cache the character access
+		Character = *Pointer_String_Command_Line;
+
+		// Is the end of the string reached ?
+		if (Character == 0)
+		{
+			*Pointer_Token_Length = 0;
+			return NULL;
+		}
+
+		// Discard any space character
+		if ((Character != '\t') && (Character != ' ')) break;
+		Pointer_String_Command_Line++;
+	}
+
+	// The token beginning has been found, now find its end
+	Pointer_String_Token_Start = Pointer_String_Command_Line;
+	Length = 0;
+	while (1)
+	{
+		// Cache the character access
+		Character = *Pointer_String_Command_Line;
+
+		// // Stop at the fist space character or at the end of the string
+		if ((Character == 0) || (Character == '\t') || (Character == ' '))
+		{
+			*Pointer_Token_Length = Length;
+			return Pointer_String_Token_Start;
+		}
+
+		// Prepare for the next character
+		Pointer_String_Command_Line++;
+		Length++;
+	}
+}
