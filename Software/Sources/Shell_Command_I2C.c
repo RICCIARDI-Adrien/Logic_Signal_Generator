@@ -30,6 +30,6 @@ void ShellCommandI2CConfigureCallback(char *Pointer_String_Arguments)
 		return;
 	}
 
-	MSSPSetI2CFrequency(Frequency);
+	MSSPI2CSetFrequency(Frequency);
 	USBCommunicationsWriteString("\r\nSuccess.");
 }
