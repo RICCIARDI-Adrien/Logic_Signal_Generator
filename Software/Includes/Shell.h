@@ -33,4 +33,14 @@ char *ShellExtractNextToken(char *Pointer_String_Command_Line, unsigned char *Po
  */
 unsigned char ShellProcessCommand(char *Pointer_String_Command_Line);
 
+/** Allow to easily compare a token (which is a non zero-terminated string) with a classic ASCIIZ string.
+ * @param Pointer_String_Token The token string, which may or may not be zero-terminated.
+ * @param Pointer_String_To_Compare The string to compare with.
+ * @param Token_Length The length of the token string, as reported by the call to ShellExtractNextToken().
+ * @return 0 if the two strings are equal (like strlen() would do),
+ * @return 1 if the two strings do not match,
+ * @return 2 if one or both of the provided string arguments are NULL.
+ */
+unsigned char ShellCompareTokenWithString(char *Pointer_String_Token, char *Pointer_String_To_Compare, unsigned char Token_Length);
+
 #endif

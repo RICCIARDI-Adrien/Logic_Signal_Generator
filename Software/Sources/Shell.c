@@ -148,7 +148,7 @@ char *ShellExtractNextToken(char *Pointer_String_Command_Line, unsigned char *Po
 unsigned char ShellProcessCommand(char *Pointer_String_Command_Line)
 {
 	char *Pointer_String_Command;
-	unsigned char Token_Length = 0, Command_Length, i;
+	unsigned char Token_Length = 0, i;
 	const TShellCommand *Pointer_Commands = Shell_Commands;
 
 	// The first word is the command itself
@@ -158,8 +158,7 @@ unsigned char ShellProcessCommand(char *Pointer_String_Command_Line)
 	for (i = 0; i < SHELL_COMMANDS_COUNT; i++)
 	{
 		// Is it the right command ?
-		Command_Length = (unsigned char) strlen(Pointer_Commands->Pointer_String_Command); // No command can excess 255 bytes
-		if ((Command_Length == Token_Length) && (strncmp(Pointer_String_Command, Pointer_Commands->Pointer_String_Command, Command_Length) == 0))
+		if (ShellCompareTokenWithString(Pointer_String_Command, (char *) Pointer_Commands->Pointer_String_Command, Token_Length) == 0)
 		{
 			LOG(SHELL_IS_LOGGING_ENABLED, "Found the matching command \"%s\", executing it.", Pointer_Commands->Pointer_String_Command);
 
@@ -179,5 +178,30 @@ unsigned char ShellProcessCommand(char *Pointer_String_Command_Line)
 	}
 
 	// No matching command was found
+	return 1;
+}
+
+unsigned char ShellCompareTokenWithString(char *Pointer_String_Token, char *Pointer_String_To_Compare, unsigned char Token_Length)
+{
+	unsigned char Length;
+
+	// Make sure the provided strings are valid
+	if (Pointer_String_Token == NULL)
+	{
+		LOG(SHELL_IS_LOGGING_ENABLED, "Error : the token string is NULL.");
+		return 2;
+	}
+	if (Pointer_String_To_Compare == NULL)
+	{
+		LOG(SHELL_IS_LOGGING_ENABLED, "Error : the string to compare is NULL.");
+		return 2;
+	}
+
+	// Also make sure that the string length is identical, otherwise two strings that begin the same could be mistakenly told as equal
+	Length = (unsigned char) strlen(Pointer_String_To_Compare);
+	if (Length != Token_Length) return 1;
+
+	// Eventually compare the two strings
+	if (strncmp(Pointer_String_Token, Pointer_String_To_Compare, Token_Length) == 0) return 0;
 	return 1;
 }
