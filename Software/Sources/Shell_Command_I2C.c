@@ -5,6 +5,7 @@
 #include <MSSP.h>
 #include <Shell.h>
 #include <Shell_Commands.h>
+#include <stdio.h>
 #include <USB_Communications.h>
 
 //-------------------------------------------------------------------------------------------------
@@ -32,4 +33,29 @@ void ShellCommandI2CConfigureCallback(char *Pointer_String_Arguments)
 
 	MSSPI2CSetFrequency(Frequency);
 	USBCommunicationsWriteString("\r\nSuccess.");
+}
+
+void ShellCommandI2CScanCallback(char __attribute__((unused)) *Pointer_String_Arguments)
+{
+	unsigned char i, Result;
+	char String_Temporary[32];
+
+	// Configure the I2C interface
+	MSSPSetFunctioningMode(MSSP_FUNCTIONING_MODE_I2C);
+
+	// Ignore the I2C General Call Address of value 0, otherwise we would not know which slave answered
+	for (i = 1; i != 127; i++)
+	{
+		// Send each slave address one at a time
+		MSSPI2CGenerateStart();
+		Result = MSSPI2CWriteByte((unsigned char) (i << 1) | MSSP_I2C_OPERATION_READ);
+		MSSPI2CGenerateStop();
+
+		// Did the slave answered ?
+		if (Result == 0)
+		{
+			snprintf(String_Temporary, sizeof(String_Temporary), "\r\nAddress 0x%02X answered.", i);
+			USBCommunicationsWriteString(String_Temporary);
+		}
+	}
 }

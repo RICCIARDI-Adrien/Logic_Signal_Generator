@@ -20,5 +20,11 @@ const TShellCommand Shell_Commands[SHELL_COMMANDS_COUNT] =
 		.Pointer_String_Command = "i2c-configure",
 		.Pointer_String_Description = "set the I2C interface settings. Usage : \"i2c-configure 100khz|400khz\".",
 		.Command_Callback = ShellCommandI2CConfigureCallback
+	},
+	// I2C scan
+	{
+		.Pointer_String_Command = "i2c-scan",
+		.Pointer_String_Description = "scan the I2C bus from address 1 to 127.",
+		.Command_Callback = ShellCommandI2CScanCallback
 	}
 };
