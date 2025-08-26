@@ -33,4 +33,12 @@ typedef struct
 /** Hold all existing shell commands. */
 extern const TShellCommand Shell_Commands[SHELL_COMMANDS_COUNT];
 
+//-------------------------------------------------------------------------------------------------
+// Functions
+//-------------------------------------------------------------------------------------------------
+/** Implement the "help" shell command.
+ * @param Pointer_String_Arguments The command line arguments.
+ */
+void ShellCommandHelpCallback(char *Pointer_String_Arguments);
+
 #endif
