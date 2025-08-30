@@ -196,11 +196,11 @@ void ShellCommandI2CCallback(char *Pointer_String_Arguments)
 
 			case I2C_COMMAND_TYPE_WRITE:
 			{
-				unsigned char Is_Acknowledge_Received;
+				unsigned char Is_Not_Acknowledge_Received;
 
 				LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Writing the byte 0x%02X.", Pointer_Command->Data);
-				Is_Acknowledge_Received = MSSPI2CWriteByte(Pointer_Command->Data);
-				if (!Is_Acknowledge_Received)
+				Is_Not_Acknowledge_Received = MSSPI2CWriteByte(Pointer_Command->Data);
+				if (Is_Not_Acknowledge_Received)
 				{
 					snprintf(String_Temporary, sizeof(String_Temporary), "\r\nGot NACK to the write 0x%02X.", Pointer_Command->Data);
 					USBCommunicationsWriteString(String_Temporary);
