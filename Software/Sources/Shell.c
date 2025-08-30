@@ -210,7 +210,7 @@ unsigned char ShellCompareTokenWithString(char *Pointer_String_Token, char *Poin
 unsigned char ShellConvertNumericalArgumentToBinary(char *Pointer_String, unsigned char Length, unsigned long *Pointer_Binary)
 {
 	char Terminating_Character;
-	unsigned char Return_Value;
+	unsigned char Return_Value = 1;
 
 	// Make sure there is some string to parse
 	if (Pointer_String == NULL)
@@ -231,16 +231,15 @@ unsigned char ShellConvertNumericalArgumentToBinary(char *Pointer_String, unsign
 	// Handle a hexadecimal number
 	if (*Pointer_String == 'h')
 	{
-		// Bypass the 'h'
-		Pointer_String++;
+		// Is there some data following the 'h' ?
 		if (Length == 1)
 		{
 			LOG(SHELL_IS_LOGGING_ENABLED, "Error : no number digits provided in the hexadecimal number string.");
-			return 1;
+			goto Exit;
 		}
 
-		LOG(SHELL_IS_LOGGING_ENABLED, "Converting the hexadecimal number string \"%s\" to binary.", Pointer_String);
-		Return_Value = UtilityConvertHexadecimalNumberToBinary(Pointer_String, Pointer_Binary);
+		LOG(SHELL_IS_LOGGING_ENABLED, "Converting the hexadecimal number string \"%s\" to binary.", Pointer_String + 1); // Bypass the 'h'
+		Return_Value = UtilityConvertHexadecimalNumberToBinary(Pointer_String + 1, Pointer_Binary); // Bypass the 'h'
 	}
 	// Handle a decimal number
 	else
@@ -249,6 +248,7 @@ unsigned char ShellConvertNumericalArgumentToBinary(char *Pointer_String, unsign
 		Return_Value = UtilityConvertDecimalNumberToBinary(Pointer_String, Pointer_Binary);
 	}
 
+Exit:
 	// Restore the string terminating character to restore the command line string as we got it
 	Pointer_String[Length] = Terminating_Character;
 
