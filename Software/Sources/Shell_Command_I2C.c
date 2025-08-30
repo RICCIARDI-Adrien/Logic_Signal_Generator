@@ -59,13 +59,13 @@ static unsigned char ShellCommandI2CConvertNumericalArgumentToBinary(char *Point
 		}
 
 		LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Converting the hexadecimal number string \"%s\" to binary.", Pointer_String);
-		Return_Value = UtilityConvertHexadecimalToBinary(Pointer_String, Pointer_Binary);
+		Return_Value = UtilityConvertHexadecimalNumberToBinary(Pointer_String, Pointer_Binary);
 	}
 	// Handle a decimal number
 	else
 	{
-		// TODO
-		Return_Value = 1;
+		LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Converting the decimal number string \"%s\" to binary.", Pointer_String);
+		Return_Value = UtilityConvertDecimalNumberToBinary(Pointer_String, Pointer_Binary);
 	}
 
 	// Restore the string terminating character to restore the command line string as we got it
@@ -148,6 +148,29 @@ void ShellCommandI2CCallback(char *Pointer_String_Arguments)
 				LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Asked to read %lu bytes.", Value);
 				Pointer_Command->Type = I2C_COMMAND_TYPE_READ;
 				Pointer_Command->Bytes_Count = Value;
+				break;
+
+			default:
+				LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Trying to find a write command.");
+
+				// Convert the bytes count to binary
+				if (ShellCommandI2CConvertNumericalArgumentToBinary(Pointer_String_Arguments, Length, &Value) != 0)
+				{
+					USBCommunicationsWriteString("\r\nError : a command is invalid.");
+					return;
+				}
+
+				// Only bytes are allowed
+				if (Value > 255)
+				{
+					USBCommunicationsWriteString("\r\nError : only bytes are allowed as a write command data, make sure the value is in range [0,255].");
+					return;
+				}
+
+				// Fill the command
+				Pointer_Command->Type = I2C_COMMAND_TYPE_WRITE;
+				Pointer_Command->Data = (unsigned char) Value;
+				LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Found a write command with value 0x%02X.",  Pointer_Command->Data);
 				break;
 		}
 
