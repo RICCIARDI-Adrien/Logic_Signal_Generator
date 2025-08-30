@@ -104,7 +104,7 @@ void ShellCommandI2CCallback(char *Pointer_String_Arguments)
 	} TI2CCommand;
 
 	TI2CCommand Commands[MAXIMUM_COMMANDS_COUNT], *Pointer_Command = Commands;
-	unsigned char Commands_Count = 0, Length = 0;
+	unsigned char Commands_Count = 0, Length = 0, i, Is_Start_Generated = 0;
 	unsigned long Value;
 
 	// Parse all commands to validate the command line syntax
@@ -181,6 +181,7 @@ void ShellCommandI2CCallback(char *Pointer_String_Arguments)
 			USBCommunicationsWriteString("\r\nError : the maximum amount of commands has been reached.");
 			return;
 		}
+		Pointer_Command++;
 	}
 
 	// Tell the user that no command was provided
@@ -189,9 +190,43 @@ void ShellCommandI2CCallback(char *Pointer_String_Arguments)
 		USBCommunicationsWriteString("\r\nNo I2C command was given.");
 		return;
 	}
-	LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Parsed %u commands.", Commands_Count);
+	LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Parsed %u commands, now executing them.", Commands_Count);
 
-	// TODO
+	// Configure the I2C interface
+	MSSPSetFunctioningMode(MSSP_FUNCTIONING_MODE_I2C);
+
+	// Execute the commands
+	Pointer_Command = Commands;
+	for (i = 0; i < Commands_Count; i++)
+	{
+		LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Executing command %u.", i);
+		switch (Pointer_Command->Type)
+		{
+			case I2C_COMMAND_TYPE_GENERATE_START:
+				// Differentiate between an I2C start and a repeated start
+				if (Is_Start_Generated)
+				{
+					LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Generating a REPEATED START.");
+					MSSPI2CGenerateRepeatedStart();
+				}
+				else
+				{
+					LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Generating a START.");
+					MSSPI2CGenerateStart();
+					Is_Start_Generated = 1;
+				}
+				break;
+
+			case I2C_COMMAND_TYPE_GENERATE_STOP:
+				LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Generating a STOP.");
+				MSSPI2CGenerateStop();
+				Is_Start_Generated = 0;
+				break;
+		}
+
+		// Go to the next command
+		Pointer_Command++;
+	}
 }
 
 void ShellCommandI2CConfigureCallback(char *Pointer_String_Arguments)
