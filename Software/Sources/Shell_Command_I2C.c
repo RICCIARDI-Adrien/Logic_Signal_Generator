@@ -46,6 +46,7 @@ void ShellCommandI2CCallback(char *Pointer_String_Arguments)
 	TI2CCommand Commands[MAXIMUM_COMMANDS_COUNT], *Pointer_Command = Commands;
 	unsigned char Commands_Count = 0, Length = 0, i, Is_Start_Generated = 0;
 	unsigned long Value;
+	char String_Temporary[32];
 
 	// Parse all commands to validate the command line syntax
 	while (*Pointer_String_Arguments != 0)
@@ -162,6 +163,51 @@ void ShellCommandI2CCallback(char *Pointer_String_Arguments)
 				MSSPI2CGenerateStop();
 				Is_Start_Generated = 0;
 				break;
+
+			case I2C_COMMAND_TYPE_READ:
+			{
+				unsigned char Is_Acknowledge_Generated, Data;
+				unsigned long Read_Bytes_Count = Pointer_Command->Bytes_Count, Read_Number;
+				char Character;
+
+				// Read all bytes one at a time
+				snprintf(String_Temporary, sizeof(String_Temporary), "\r\nReading %lu bytes.", Read_Bytes_Count);
+				USBCommunicationsWriteString(String_Temporary);
+				LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Reading %lu bytes.", Read_Bytes_Count);
+				for (Read_Number = 0; Read_Number < Read_Bytes_Count; Read_Number++)
+				{
+					// Send a NACK if this is the last read command
+					if (Read_Number == Read_Bytes_Count - 1) Is_Acknowledge_Generated = 0;
+					else Is_Acknowledge_Generated = 1;
+
+					// Read the byte
+					LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Reading the byte %lu and sending %s to the slave device.", Read_Number, Is_Acknowledge_Generated ? "ACK" : "NACK");
+					Data = MSSPI2CReadByte(Is_Acknowledge_Generated);
+
+					// Format the output
+					if ((Data >= ' ') && (Data <= '~')) Character = Data; // Make sure only printable characters are shown
+					else Character = '.';
+					snprintf(String_Temporary, sizeof(String_Temporary), "\r\n0x%08lX: 0x%02X (%u)\t'%c'.", Read_Number, Data, Data, Character);
+					USBCommunicationsWriteString(String_Temporary);
+				}
+
+				break;
+			}
+
+			case I2C_COMMAND_TYPE_WRITE:
+			{
+				unsigned char Is_Acknowledge_Received;
+
+				LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Writing the byte 0x%02X.", Pointer_Command->Data);
+				Is_Acknowledge_Received = MSSPI2CWriteByte(Pointer_Command->Data);
+				if (!Is_Acknowledge_Received)
+				{
+					snprintf(String_Temporary, sizeof(String_Temporary), "\r\nGot NACK to the write 0x%02X.", Pointer_Command->Data);
+					USBCommunicationsWriteString(String_Temporary);
+				}
+
+				break;
+			}
 		}
 
 		// Go to the next command
