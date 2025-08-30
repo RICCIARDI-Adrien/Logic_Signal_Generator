@@ -16,7 +16,8 @@ SOURCES = \
 	$(PATH_SOURCES)/Shell_Commands.c \
 	$(PATH_SOURCES)/UART.c \
 	$(PATH_SOURCES)/USB_Communications.c \
-	$(PATH_SOURCES)/USB_Core.c
+	$(PATH_SOURCES)/USB_Core.c \
+	$(PATH_SOURCES)/Utility.c
 
 CC = xc8-cc
 # The -Wa,-a argument tells the assembler to generate a listing file
