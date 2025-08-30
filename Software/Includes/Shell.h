@@ -43,4 +43,13 @@ unsigned char ShellProcessCommand(char *Pointer_String_Command_Line);
  */
 unsigned char ShellCompareTokenWithString(char *Pointer_String_Token, char *Pointer_String_To_Compare, unsigned char Token_Length);
 
+/** Convert a numerical value typed by the user to its binary representation.
+ * @param Pointer_String The numeric value, it may be prefixed by the letter 'h' to indicate that this is a hexadecimal number. This string is not zero terminated because it is directly pointing to the command line string read with ShellReadCommandLine().
+ * @param Length The length of the numeric value string.
+ * @param Pointer_Binary On output, contain the converted number.
+ * @return 0 on success,
+ * @return 1 if an error occurred.
+ */
+unsigned char ShellConvertNumericalArgumentToBinary(char *Pointer_String, unsigned char Length, unsigned long *Pointer_Binary);
+
 #endif

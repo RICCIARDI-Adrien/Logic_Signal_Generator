@@ -6,6 +6,7 @@
 #include <Shell.h>
 #include <string.h>
 #include <USB_Communications.h>
+#include <Utility.h>
 
 //-------------------------------------------------------------------------------------------------
 // Private constants
@@ -204,4 +205,53 @@ unsigned char ShellCompareTokenWithString(char *Pointer_String_Token, char *Poin
 	// Eventually compare the two strings
 	if (strncmp(Pointer_String_Token, Pointer_String_To_Compare, Token_Length) == 0) return 0;
 	return 1;
+}
+
+unsigned char ShellConvertNumericalArgumentToBinary(char *Pointer_String, unsigned char Length, unsigned long *Pointer_Binary)
+{
+	char Terminating_Character;
+	unsigned char Return_Value;
+
+	// Make sure there is some string to parse
+	if (Pointer_String == NULL)
+	{
+		LOG(SHELL_IS_LOGGING_ENABLED, "Error : the provided string is NULL.");
+		return 1;
+	}
+	if (Length == 0)
+	{
+		LOG(SHELL_IS_LOGGING_ENABLED, "Error : the string length is 0.");
+		return 1;
+	}
+
+	// To avoid parsing the whole string and copying it to a temporary buffer, temporarily just replace the arguments separating character right after the last string character by a terminating character
+	Terminating_Character = Pointer_String[Length]; // If this string was the last argument, there is still the zero character terminating the command line string, so we are not accessing an out-of-bound byte here
+	Pointer_String[Length] = 0;
+
+	// Handle a hexadecimal number
+	if (*Pointer_String == 'h')
+	{
+		// Bypass the 'h'
+		Pointer_String++;
+		if (Length == 1)
+		{
+			LOG(SHELL_IS_LOGGING_ENABLED, "Error : no number digits provided in the hexadecimal number string.");
+			return 1;
+		}
+
+		LOG(SHELL_IS_LOGGING_ENABLED, "Converting the hexadecimal number string \"%s\" to binary.", Pointer_String);
+		Return_Value = UtilityConvertHexadecimalNumberToBinary(Pointer_String, Pointer_Binary);
+	}
+	// Handle a decimal number
+	else
+	{
+		LOG(SHELL_IS_LOGGING_ENABLED, "Converting the decimal number string \"%s\" to binary.", Pointer_String);
+		Return_Value = UtilityConvertDecimalNumberToBinary(Pointer_String, Pointer_Binary);
+	}
+
+	// Restore the string terminating character to restore the command line string as we got it
+	Pointer_String[Length] = Terminating_Character;
+
+	LOG(SHELL_IS_LOGGING_ENABLED, "Return value : %u.", Return_Value);
+	return Return_Value;
 }

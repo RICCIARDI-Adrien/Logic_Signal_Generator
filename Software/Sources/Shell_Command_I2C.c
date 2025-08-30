@@ -8,72 +8,12 @@
 #include <Shell_Commands.h>
 #include <stdio.h>
 #include <USB_Communications.h>
-#include <Utility.h>
 
 //-------------------------------------------------------------------------------------------------
 // Private constants
 //-------------------------------------------------------------------------------------------------
 /** Set to 1 to enable the log messages, set to 0 to disable them. */
 #define SHELL_I2C_IS_LOGGING_ENABLED 1
-
-//-------------------------------------------------------------------------------------------------
-// Private functions
-//-------------------------------------------------------------------------------------------------
-/** Convert a numerical value typed by the user to its binary representation.
- * @param Pointer_String The numeric value, it may be prefixed by the letter 'h' to indicate that this is a hexadecimal number. This string is not zero terminated because it is directly pointing to the command line string.
- * @param Length The length of the numeric value string.
- * @param Pointer_Binary On output, contain the converted number.
- * @return 0 on success,
- * @return 1 if an error occurred.
- */
-static unsigned char ShellCommandI2CConvertNumericalArgumentToBinary(char *Pointer_String, unsigned char Length, unsigned long *Pointer_Binary)
-{
-	char Terminating_Character;
-	unsigned char Return_Value;
-
-	// Make sure there is some string to parse
-	if (Pointer_String == NULL)
-	{
-		LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Error : the provided string is NULL.");
-		return 1;
-	}
-	if (Length == 0)
-	{
-		LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Error : the string length is 0.");
-		return 1;
-	}
-
-	// To avoid parsing the whole string and copying it to a temporary buffer, temporarily just replace the arguments separating character right after the last string character by a terminating character
-	Terminating_Character = Pointer_String[Length]; // If this string was the last argument, there is still the zero character terminating the command line string, so we are not accessing an out-of-bound byte here
-	Pointer_String[Length] = 0;
-
-	// Handle a hexadecimal number
-	if (*Pointer_String == 'h')
-	{
-		// Bypass the 'h'
-		Pointer_String++;
-		if (Length == 1)
-		{
-			LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Error : no number digits provided in the hexadecimal number string.");
-			return 1;
-		}
-
-		LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Converting the hexadecimal number string \"%s\" to binary.", Pointer_String);
-		Return_Value = UtilityConvertHexadecimalNumberToBinary(Pointer_String, Pointer_Binary);
-	}
-	// Handle a decimal number
-	else
-	{
-		LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Converting the decimal number string \"%s\" to binary.", Pointer_String);
-		Return_Value = UtilityConvertDecimalNumberToBinary(Pointer_String, Pointer_Binary);
-	}
-
-	// Restore the string terminating character to restore the command line string as we got it
-	Pointer_String[Length] = Terminating_Character;
-
-	LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Return value : %u.", Return_Value);
-	return Return_Value;
-}
 
 //-------------------------------------------------------------------------------------------------
 // Public functions
@@ -138,7 +78,7 @@ void ShellCommandI2CCallback(char *Pointer_String_Arguments)
 				}
 
 				// Convert the bytes count to binary
-				if (ShellCommandI2CConvertNumericalArgumentToBinary(Pointer_String_Arguments + 1, Length - 1, &Value) != 0) // Add one to bypass the 'r' character
+				if (ShellConvertNumericalArgumentToBinary(Pointer_String_Arguments + 1, Length - 1, &Value) != 0) // Add one to bypass the 'r' character
 				{
 					USBCommunicationsWriteString("\r\nError : the bytes count argument provided to the read command is invalid.");
 					return;
@@ -154,7 +94,7 @@ void ShellCommandI2CCallback(char *Pointer_String_Arguments)
 				LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Trying to find a write command.");
 
 				// Convert the bytes count to binary
-				if (ShellCommandI2CConvertNumericalArgumentToBinary(Pointer_String_Arguments, Length, &Value) != 0)
+				if (ShellConvertNumericalArgumentToBinary(Pointer_String_Arguments, Length, &Value) != 0)
 				{
 					USBCommunicationsWriteString("\r\nError : a command is invalid.");
 					return;
