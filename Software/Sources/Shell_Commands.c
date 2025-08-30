@@ -15,6 +15,12 @@ const TShellCommand Shell_Commands[SHELL_COMMANDS_COUNT] =
 		.Pointer_String_Description = "show this commands list.",
 		.Command_Callback = ShellCommandHelpCallback
 	},
+	// I2C
+	{
+		.Pointer_String_Command = "i2c",
+		.Pointer_String_Description = "send an I2C transaction on the bus. Use \"[\" for start, \"]\" for stop, \"r[h]XXXX\" for reading XXXX bytes, then \"XX\" or \"hXX\" to write a decimal or a hexadecimal byte.",
+		.Command_Callback = ShellCommandI2CCallback
+	},
 	// I2C configure
 	{
 		.Pointer_String_Command = "i2c-configure",
