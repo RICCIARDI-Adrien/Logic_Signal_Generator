@@ -12,9 +12,17 @@
  * @param Pointer_String The string to convert.
  * @param Pointer_Binary On output, contain the converted binary value.
  * @return 0 if the number was successfully converted,
- * @return 1 if the provided number is higher than the available output storage (4 bytes),
- * @return 2 if the provided string contains a non hexadecimal character.
+ * @return 1 if the provided string contains a non hexadecimal character,
+ * @return 2 if the provided number is higher than the available output storage (4 bytes).
  */
-unsigned char UtilityConvertHexadecimalToBinary(char *Pointer_String, unsigned long *Pointer_Binary);
+unsigned char UtilityConvertHexadecimalNumberToBinary(char *Pointer_String, unsigned long *Pointer_Binary);
+
+/** Convert an ASCIIZ string made of the [0-9] character set to its binary representation.
+ * @param Pointer_String The string to convert.
+ * @param Pointer_Binary On output, contain the converted binary value.
+ * @return 0 if the number was successfully converted,
+ * @return 1 if the provided string contains a non decimal character.
+ */
+unsigned char UtilityConvertDecimalNumberToBinary(char *Pointer_String, unsigned long *Pointer_Binary);
 
 #endif
