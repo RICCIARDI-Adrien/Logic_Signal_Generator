@@ -5,8 +5,6 @@
 #include <MSSP.h>
 #include <xc.h>
 
-#include <Log.h>
-
 //-------------------------------------------------------------------------------------------------
 // Private variables
 //-------------------------------------------------------------------------------------------------
@@ -59,6 +57,16 @@ void MSSPI2CGenerateStart(void)
 	SSP1CON2bits.SEN = 1;
 
 	// Wait for the start sequence to terminate
+	while (!PIR1bits.SSPIF);
+	PIR1bits.SSPIF = 0; // Clear the flag
+}
+
+void MSSPI2CGenerateRepeatedStart(void)
+{
+	// Start the repeated start sequence
+	SSP1CON2bits.RSEN = 1;
+
+	// Wait for the repeated start sequence to terminate
 	while (!PIR1bits.SSPIF);
 	PIR1bits.SSPIF = 0; // Clear the flag
 }

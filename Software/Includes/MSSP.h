@@ -46,6 +46,9 @@ void MSSPI2CSetFrequency(TMSSPI2CFrequency Frequency);
 /** Generate an I2C start sequence and wait for it to complete. */
 void MSSPI2CGenerateStart(void);
 
+/** Generate an I2C repeated start sequence and wait for it to complete. */
+void MSSPI2CGenerateRepeatedStart(void);
+
 /** Generate an I2C stop sequence and wait for it to complete. */
 void MSSPI2CGenerateStop(void);
 
