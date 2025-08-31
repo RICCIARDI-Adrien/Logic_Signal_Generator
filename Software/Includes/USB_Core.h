@@ -17,7 +17,10 @@
 #define USB_CORE_HARDWARE_ENDPOINTS_COUNT 4
 
 /** Tell whether the USB peripheral interrupt needs to be serviced. */
-#define USB_CORE_IS_INTERRUPT_FIRED() PIR3bits.USBIF // No need to check whether the interrupt is enabled in the PIE register, because the USB interrupt is always enabled
+#define USB_CORE_IS_INTERRUPT_FIRED() PIR3bits.USBIF // No need to check the interrupt enabled bit because the interrupt is always enabled
+
+/** Tell whether the USB activity LED interrupt needs to be serviced. */
+#define USB_CORE_IS_ACTIVITY_LED_INTERRUPT_FIRED() INTCONbits.TMR0IF // No need to check the interrupt enabled bit because the interrupt is always enabled
 
 /** The USB specification release number in BCD format to use in the relevant descriptors. */
 #define USB_CORE_BCD_USB_SPECIFICATION_RELEASE_NUMBER { 0x00, 0x02 }
@@ -265,17 +268,25 @@ typedef struct
  */
 void USBCoreInitialize(const TUSBCoreDescriptorDevice *Pointer_Device_Descriptor);
 
-/** Configure the specified endpoint out buffer for an upcoming reception of data from the host.
+/** Configure the specified endpoint OUT buffer for an upcoming reception of data from the host.
  * @param Endpoint_ID The endpoint number (any endpoint other than 0 must have been enabled in the device descriptors).
  * @param Is_Data_1_Synchronization The data synchronization value to expect from the host. Set to 0 for a DATA0 packet ID or set to 1 for a DATA1 packet ID.
  * @note The maximum endpoint packet size is always set to USB_CORE_ENDPOINT_PACKETS_SIZE.
  */
 void USBCorePrepareForOutTransfer(unsigned char Endpoint_ID, unsigned char Is_Data_1_Synchronization);
 
-/** TODO */
+/** Configure the specified endpoint IN buffer for being read by the host.
+ * @param Endpoint_ID The endpoint number (any endpoint other than 0 must have been enabled in the device descriptors).
+ * @param Pointer_Data The buffer containing the data to write to the IN buffer.
+ * @param Data_Size The size of the data buffer in bytes. TODO For now, do not exceed the maximum USB packet size.
+ * @param Is_Data_1_Synchronization The data synchronization value to expect from the host. Set to 0 for a DATA0 packet ID or set to 1 for a DATA1 packet ID.
+ */
 void USBCorePrepareForInTransfer(unsigned char Endpoint_ID, void *Pointer_Data, unsigned char Data_Size, unsigned char Is_Data_1_Synchronization);
 
 /** Must be called from the interrupt context to handle the USB interrupt. */
 void USBCoreInterruptHandler(void);
+
+/** Must be called from the interrupt context to handle the USB activity LED interrupt. */
+void USBCoreActivityLedInterruptHandler(void);
 
 #endif

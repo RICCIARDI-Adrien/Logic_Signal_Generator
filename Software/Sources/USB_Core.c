@@ -23,6 +23,9 @@
 #define USB_CORE_DEVICE_REQUEST_TYPE_VALUE_RECIPIENT_ENDPOINT 2
 #define USB_CORE_DEVICE_REQUEST_TYPE_VALUE_RECIPIENT_OTHER 3
 
+/** A LED telling the user when there is activity on the USB bus. */
+#define USB_CORE_ACTIVITY_LED LATBbits.LATB2
+
 //-------------------------------------------------------------------------------------------------
 // Private types
 //-------------------------------------------------------------------------------------------------
@@ -210,7 +213,15 @@ void USBCoreInitialize(const TUSBCoreDescriptorDevice *Pointer_Device_Descriptor
 	volatile unsigned char *Pointer_Endpoint_Data_Buffer, *Pointer_Endpoint_Register;
 	TUSBCoreHardwareEndpointConfiguration *Pointer_Endpoint_Hardware_Configuration;
 
-	// Make sure there are enough alloted hardware endpoints
+	// Display the USB bus activity using a LED
+	ANSELBbits.ANSB2 = 0;
+	USB_CORE_ACTIVITY_LED = 0; // Start with the LED turned off
+	TRISBbits.TRISB2 = 0;
+
+	// Configure the timer 0 to turn off the LED after a while of inactivity
+	T0CON = 0x03; // Do not enable the timer yet, configure it in 16-bit mode, use Fosc/4 as the clock, enable a 1:16 prescaler to make the timer overflow after about Fosc / 4 / 16-bit timer / prescaler = 48000000 / 4 / 65536 / 16 = 5,72Hz => 87,38ms
+
+	// Make sure there are enough allocated hardware endpoints
 	Endpoints_Count = Pointer_Device_Descriptor->Hardware_Endpoints_Count;
 	if (Endpoints_Count > USB_CORE_HARDWARE_ENDPOINTS_COUNT)
 	{
@@ -263,12 +274,18 @@ void USBCoreInitialize(const TUSBCoreDescriptorDevice *Pointer_Device_Descriptor
 	UEP0 = 0x16; // Enable endpoint handshake, allow control transfers, enable the endpoint OUT and IN directions
 
 	// Configure the interrupts
+	// USB module
 	USB_CORE_INTERRUPT_ENABLE(); // Enable the USB peripheral global interrupt
 	UIE = 0x29; // Enable the STALL Handshake, the Transaction Complete and the Reset interrupts
 	IPR3bits.USBIP = 1; // Set the USB interrupt as high priority
 
+	// Activity LED timer
+	INTCON2bits.TMR0IP = 0; // Set the interrupt as low priority
+	INTCONbits.TMR0IE = 1; // Enable the interrupt
+
 	// Enable the USB module and attach the device to the USB bus
 	UCONbits.USBEN = 1;
+	T0CONbits.TMR0ON = 1; // Enable the activity LED clearing timer
 
 	// Use the USB bus precise timings to keep the microcontroller clock synchronized
 	ACTCON = 0xD0; // Enable the active clock tuning module, allow the module to automatically update the OSCTUNE register, use the USB host clock as reference
@@ -327,6 +344,13 @@ void USBCoreInterruptHandler(void)
 	// When TRNIF is cleared and there is a transfer in the FIFO, the USBIF flag is reasserted pretty soon. That's why the latter flag needs to be cleared first.
 	// There is no issue of USB interrupt handler re-entrancy because the interrupts are disabled until the handler returns
 	PIR3bits.USBIF = 0;
+
+	// Turn the activity LED on
+	USB_CORE_ACTIVITY_LED = 1;
+	// Re-arm the timer
+	TMR0H = 0;
+	TMR0L = 0;
+	T0CONbits.TMR0ON = 1;
 
 	LOG(USB_CORE_IS_LOGGING_ENABLED, "\033[33m--- Entering USB handler ---\033[0m");
 
@@ -561,4 +585,16 @@ void USBCoreInterruptHandler(void)
 		// Clear the interrupt flag
 		UIRbits.TRNIF = 0;
 	}
+}
+
+void USBCoreActivityLedInterruptHandler(void)
+{
+	// Stop the timer, so it does not generate useless interrupts
+	T0CONbits.TMR0ON = 0;
+
+	// Turn off the activity LED
+	USB_CORE_ACTIVITY_LED = 0;
+
+	// Clear the interrupt flag
+	INTCONbits.TMR0IF = 0;
 }

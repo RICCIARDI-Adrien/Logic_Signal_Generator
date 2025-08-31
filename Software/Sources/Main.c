@@ -241,6 +241,7 @@ void __interrupt(high_priority) MainInterruptHandlerHighPriority(void)
 /** Low-priority interrupts handler entry point. */
 void __interrupt(low_priority) MainInterruptHandlerLowPriority(void)
 {
+	if (USB_CORE_IS_ACTIVITY_LED_INTERRUPT_FIRED()) USBCoreActivityLedInterruptHandler();
 }
 
 //-------------------------------------------------------------------------------------------------
