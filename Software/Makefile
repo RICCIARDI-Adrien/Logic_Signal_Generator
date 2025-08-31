@@ -21,13 +21,15 @@ SOURCES = \
 
 CC = xc8-cc
 # The -Wa,-a argument tells the assembler to generate a listing file
-CFLAGS = -mcpu=18F25K50 -Xparser -W -Xparser -Wall -D_XTAL_FREQ=48000000 -DMAKEFILE_FIRMWARE_VERSION=\\\"$(FIRMWARE_VERSION)\\\" -Wa,-a -Wl,-Map=Logic_Signal_Generator.map
+CFLAGS = -mcpu=18F25K50 -Xparser -W -Xparser -Wall -D_XTAL_FREQ=48000000 -DMAKEFILE_FIRMWARE_VERSION=\\\"$(FIRMWARE_VERSION)\\\" -Wa,-a -Wl,-Map=Logic_Signal_Generator.map -O2
 
 all: $(PATH_BINARIES) $(PATH_OBJECTS)
 	cd $(PATH_OBJECTS) && $(CC) $(CFLAGS) -I$(PATH_INCLUDES) $(SOURCES) -o $(BINARY_NAME)
 	mv $(PATH_OBJECTS)/$(BINARY_NAME) $(PATH_BINARIES)
 
-debug: CFLAGS += -DLOG_ENABLE_LOGGING
+# It seems that this is the first defined -Ox argument is taken into account, so remove the default -02 to make room for -O0
+debug: CFLAGS_WITHOUT_OPTIMIZATIONS := $(filter-out -O2, $(CFLAGS))
+debug: CFLAGS = $(CFLAGS_WITHOUT_OPTIMIZATIONS) -O0 -DLOG_ENABLE_LOGGING
 debug: all
 
 $(PATH_BINARIES):
