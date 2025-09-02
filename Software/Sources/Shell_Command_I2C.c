@@ -252,7 +252,7 @@ void ShellCommandI2CScanCallback(char __attribute__((unused)) *Pointer_String_Ar
 	{
 		// Send each slave address one at a time
 		MSSPI2CGenerateStart();
-		Result = MSSPI2CWriteByte((unsigned char) (i << 1) | MSSP_I2C_OPERATION_READ);
+		Result = MSSPI2CWriteByte((unsigned char) (i << 1) | MSSP_I2C_OPERATION_WRITE); // Send a write operation, because after a read operation the slave holds the data line and waits for the master to clock the bus, so the master can't generate a stop
 		MSSPI2CGenerateStop();
 
 		// Did the slave answered ?
