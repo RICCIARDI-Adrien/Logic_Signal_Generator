@@ -1,0 +1,11 @@
+*-backups/
+Bill_Of_Material/
+Production_Files/
+*auto_saved_files#
+*.bak
+*-bak
+*.csv
+*.kicad_prl
+*.lck
+*.xml
+fp-info-cache
