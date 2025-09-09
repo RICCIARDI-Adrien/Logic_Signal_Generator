@@ -616,6 +616,10 @@
     [
       "8fc77a05-bc90-4b9c-af75-50025c772eda",
       "Power_Supplies"
+    ],
+    [
+      "24d2ba28-5b2a-4938-a92a-d2492fac5620",
+      "Voltage_Shifter"
     ]
   ],
   "text_variables": {}
