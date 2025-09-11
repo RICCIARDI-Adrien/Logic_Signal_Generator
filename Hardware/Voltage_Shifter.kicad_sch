@@ -5217,15 +5217,15 @@
 		(fields_autoplaced yes)
 		(uuid "6d07f0fb-0e64-4176-9a01-3822f992c10d")
 		(property "Reference" "J2"
-			(at 49.53 172.72 0)
+			(at 49.53 144.78 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 			)
 		)
-		(property "Value" "Conn_02x08_Odd_Even"
-			(at 49.53 175.26 0)
+		(property "Value" "I/O"
+			(at 49.53 147.32 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5252,11 +5252,12 @@
 			)
 		)
 		(property "Description" "I/O"
-			(at 49.53 177.8 0)
+			(at 49.53 147.32 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
+				(hide yes)
 			)
 		)
 		(pin "8"
