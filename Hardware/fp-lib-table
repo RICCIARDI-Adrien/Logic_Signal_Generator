@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "OS103011MA7QP1")(type "KiCad")(uri "${KIPRJMOD}/OS103011MA7QP1.pretty")(options "")(descr ""))
+)
