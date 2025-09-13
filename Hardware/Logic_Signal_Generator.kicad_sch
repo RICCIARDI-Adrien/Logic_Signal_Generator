@@ -3821,16 +3821,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" ""
-			(at 77.47 160.02 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Value2" "USB_ACTIVITY"
+		(property "Description" "USB_ACTIVITY"
 			(at 81.28 164.1474 90)
 			(effects
 				(font
@@ -4399,16 +4390,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" ""
-			(at 48.26 160.02 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Value2" "POWER"
+		(property "Description" "POWER"
 			(at 52.07 164.1474 90)
 			(effects
 				(font
