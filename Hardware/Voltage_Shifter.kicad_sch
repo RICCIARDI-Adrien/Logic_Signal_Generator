@@ -6577,15 +6577,15 @@
 		(dnp no)
 		(uuid "d7eab45a-2674-4d8a-89c4-461255fc07ce")
 		(property "Reference" "SW1"
-			(at 228.6 115.824 0)
+			(at 232.918 128.778 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 			)
 		)
-		(property "Value" "~"
-			(at 228.2825 115.57 0)
+		(property "Value" "OS103011MA7QP1"
+			(at 239.522 130.81 0)
 			(effects
 				(font
 					(size 1.27 1.27)
