@@ -3339,7 +3339,7 @@
 	)
 	(hierarchical_label "MCU_P1A"
 		(shape bidirectional)
-		(at 261.62 82.55 0)
+		(at 83.82 44.45 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3350,7 +3350,7 @@
 	)
 	(hierarchical_label "MCU_SDA_MISO"
 		(shape bidirectional)
-		(at 83.82 44.45 0)
+		(at 83.82 82.55 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3361,7 +3361,7 @@
 	)
 	(hierarchical_label "MCU_SCL_SCLK_P1C"
 		(shape bidirectional)
-		(at 83.82 82.55 0)
+		(at 172.72 82.55 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3372,7 +3372,7 @@
 	)
 	(hierarchical_label "MCU_RX"
 		(shape bidirectional)
-		(at 172.72 82.55 0)
+		(at 261.62 44.45 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3394,7 +3394,7 @@
 	)
 	(hierarchical_label "MCU_P1D"
 		(shape bidirectional)
-		(at 261.62 44.45 0)
+		(at 172.72 120.65 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3405,7 +3405,7 @@
 	)
 	(hierarchical_label "MCU_P1B"
 		(shape bidirectional)
-		(at 172.72 44.45 0)
+		(at 261.62 82.55 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3416,7 +3416,7 @@
 	)
 	(hierarchical_label "MCU_TX"
 		(shape bidirectional)
-		(at 172.72 120.65 0)
+		(at 172.72 44.45 0)
 		(effects
 			(font
 				(size 1.27 1.27)
