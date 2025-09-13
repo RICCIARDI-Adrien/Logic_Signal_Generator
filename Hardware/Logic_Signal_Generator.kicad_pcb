@@ -18458,7 +18458,7 @@
 		)
 	)
 	(gr_text "/MCLR"
-		(at 130.75 102.5 270)
+		(at 129 102.5 270)
 		(layer "F.SilkS")
 		(uuid "23f910ca-ace8-4c54-a9a1-f7249cf9bab6")
 		(effects
@@ -18506,7 +18506,7 @@
 		)
 	)
 	(gr_text "USB"
-		(at 143.5 80 180)
+		(at 145 80 180)
 		(layer "F.SilkS" knockout)
 		(uuid "895e58b0-0565-4d85-b090-ae66556f6033")
 		(effects
