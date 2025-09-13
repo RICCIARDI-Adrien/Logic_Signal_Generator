@@ -1602,131 +1602,6 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "power:+3.3V"
-			(power)
-			(pin_numbers
-				(hide yes)
-			)
-			(pin_names
-				(offset 0)
-				(hide yes)
-			)
-			(exclude_from_sim no)
-			(in_bom yes)
-			(on_board yes)
-			(property "Reference" "#PWR"
-				(at 0 -3.81 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Value" "+3.3V"
-				(at 0 3.556 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Footprint" ""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Datasheet" ""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Description" "Power symbol creates a global label with name \"+3.3V\""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "ki_keywords" "global power"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(symbol "+3.3V_0_1"
-				(polyline
-					(pts
-						(xy -0.762 1.27) (xy 0 2.54)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 0 2.54) (xy 0.762 1.27)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 0 0) (xy 0 2.54)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-			)
-			(symbol "+3.3V_1_1"
-				(pin power_in line
-					(at 0 0 90)
-					(length 0)
-					(name "~"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "1"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-			)
-			(embedded_fonts no)
-		)
 		(symbol "power:+5V"
 			(power)
 			(pin_numbers
@@ -3044,6 +2919,73 @@
 		(uuid "f2b43a43-c2b1-4644-add5-6d9c787f2eff")
 	)
 	(symbol
+		(lib_id "power:+5V")
+		(at 213.36 45.72 90)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "0538b42c-3747-4d8d-9193-fdd0a756ecd1")
+		(property "Reference" "#PWR039"
+			(at 217.17 45.72 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "+5V"
+			(at 209.55 45.7199 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 213.36 45.72 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 213.36 45.72 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+5V\""
+			(at 213.36 45.72 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "39415912-07b1-4512-982e-526e84191a10")
+		)
+		(instances
+			(project "Logic_Signal_Generator"
+				(path "/24489a00-9deb-415a-805c-b5419253b078"
+					(reference "#PWR039")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:GND")
 		(at 259.08 151.13 0)
 		(unit 1)
@@ -3319,7 +3261,7 @@
 	)
 	(symbol
 		(lib_id "Device:C")
-		(at 195.58 100.33 0)
+		(at 182.88 100.33 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -3328,7 +3270,7 @@
 		(fields_autoplaced yes)
 		(uuid "19fd3747-dfa6-441a-bbe9-380b27ac8b9d")
 		(property "Reference" "C5"
-			(at 199.39 96.5199 0)
+			(at 186.69 96.5199 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3337,7 +3279,7 @@
 			)
 		)
 		(property "Value" "100n"
-			(at 199.39 99.0599 0)
+			(at 186.69 99.0599 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3346,7 +3288,7 @@
 			)
 		)
 		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder"
-			(at 196.5452 104.14 0)
+			(at 183.8452 104.14 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3355,7 +3297,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 195.58 100.33 0)
+			(at 182.88 100.33 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3364,7 +3306,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 195.58 100.33 0)
+			(at 182.88 100.33 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3373,7 +3315,7 @@
 			)
 		)
 		(property "Value2" "16V"
-			(at 199.39 101.5999 0)
+			(at 186.69 101.5999 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3382,7 +3324,7 @@
 			)
 		)
 		(property "Value3" "X7R"
-			(at 199.39 104.1399 0)
+			(at 186.69 104.1399 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4305,73 +4247,6 @@
 		)
 	)
 	(symbol
-		(lib_id "power:+3.3V")
-		(at 213.36 45.72 90)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "9c879288-d0cf-463a-acc4-3391ceaa94f6")
-		(property "Reference" "#PWR039"
-			(at 217.17 45.72 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Value" "+3.3V"
-			(at 209.55 45.72 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" ""
-			(at 213.36 45.72 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" ""
-			(at 213.36 45.72 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"+3.3V\""
-			(at 213.36 45.72 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "3a7b5bca-46fe-4a2a-851f-f1788ccfe80d")
-		)
-		(instances
-			(project "Logic_Signal_Generator"
-				(path "/24489a00-9deb-415a-805c-b5419253b078"
-					(reference "#PWR039")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "Device:C")
 		(at 186.69 49.53 0)
 		(unit 1)
@@ -4843,7 +4718,7 @@
 	)
 	(symbol
 		(lib_id "Device:C")
-		(at 182.88 100.33 0)
+		(at 195.58 100.33 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -4852,7 +4727,7 @@
 		(fields_autoplaced yes)
 		(uuid "de0c427d-427c-4f7c-9804-c9460b64a347")
 		(property "Reference" "C4"
-			(at 186.69 96.5199 0)
+			(at 199.39 96.5199 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4861,7 +4736,7 @@
 			)
 		)
 		(property "Value" "470n"
-			(at 186.69 99.0599 0)
+			(at 199.39 99.0599 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4870,7 +4745,7 @@
 			)
 		)
 		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder"
-			(at 183.8452 104.14 0)
+			(at 196.5452 104.14 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4879,7 +4754,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 182.88 100.33 0)
+			(at 195.58 100.33 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4888,7 +4763,7 @@
 			)
 		)
 		(property "Description" "Unpolarized capacitor"
-			(at 182.88 100.33 0)
+			(at 195.58 100.33 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4897,7 +4772,7 @@
 			)
 		)
 		(property "Value2" "16V"
-			(at 186.69 101.5999 0)
+			(at 199.39 101.5999 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4906,7 +4781,7 @@
 			)
 		)
 		(property "Value3" "X7R"
-			(at 186.69 104.1399 0)
+			(at 199.39 104.1399 0)
 			(effects
 				(font
 					(size 1.27 1.27)
