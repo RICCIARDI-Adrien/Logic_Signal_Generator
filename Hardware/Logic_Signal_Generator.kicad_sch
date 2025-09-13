@@ -1936,6 +1936,16 @@
 			(embedded_fonts no)
 		)
 	)
+	(text "LEDs current = (5V - 1.9V) / 330ohm = 9.4mA.\nLED resistors power = 3.1V * 0.0094A = 29mW."
+		(exclude_from_sim no)
+		(at 70.612 183.642 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "0b353141-5d23-4a59-b45c-3d882a959710")
+	)
 	(text "470nF is the datasheet recommended\ntypical value."
 		(exclude_from_sim no)
 		(at 207.518 101.092 0)
@@ -3064,7 +3074,7 @@
 		(uuid "af297aaa-6067-4c9f-84b4-d938a0121461")
 	)
 	(label "LED_POWER"
-		(at 100.33 96.52 0)
+		(at 100.33 93.98 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3074,7 +3084,7 @@
 		(uuid "b363e514-23bd-49e7-9f59-41bb6116f2e5")
 	)
 	(label "LED_USB"
-		(at 100.33 93.98 0)
+		(at 100.33 96.52 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3590,7 +3600,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_1206_3216Metric_Pad1.30x1.75mm_HandSolder"
 			(at 75.692 148.59 90)
 			(effects
 				(font
@@ -3845,7 +3855,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_1206_3216Metric_Pad1.30x1.75mm_HandSolder"
 			(at 46.482 148.59 90)
 			(effects
 				(font
@@ -4362,7 +4372,7 @@
 				(hide yes)
 			)
 		)
-		(property "Value2" "ON"
+		(property "Value2" "POWER"
 			(at 52.07 164.1474 90)
 			(effects
 				(font
