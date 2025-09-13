@@ -876,14 +876,14 @@
 				(pin passive line
 					(at 5.08 0 180)
 					(length 2.54)
-					(name "2"
+					(name "3"
 						(effects
 							(font
 								(size 1.27 1.27)
 							)
 						)
 					)
-					(number "2"
+					(number "3"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -6631,7 +6631,7 @@
 		(pin "1"
 			(uuid "d9e7d483-820d-49df-8e34-5ca537111ea0")
 		)
-		(pin "2"
+		(pin "3"
 			(uuid "e19dc37e-e3f7-42e4-827a-527e9a25a7f6")
 		)
 		(pin "2"
