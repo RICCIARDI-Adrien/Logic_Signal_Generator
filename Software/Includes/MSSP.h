@@ -19,7 +19,8 @@
 /** All supported functioning modes. */
 typedef enum
 {
-	MSSP_FUNCTIONING_MODE_I2C
+	MSSP_FUNCTIONING_MODE_I2C,
+	MSSP_FUNCTIONING_MODE_SPI
 } TMSSPFunctioningMode;
 
 /** All supported I2C bus frequencies. The computing formula is Baud_Rate = Fosc / (Fclk * 4) - 1. */
@@ -28,6 +29,25 @@ typedef enum : unsigned char
 	MSSP_I2C_FREQUENCY_100KHZ = 119, // For a 48MHz Fosc
 	MSSP_I2C_FREQUENCY_400KHZ = 29, // For a 48MHz Fosc
 } TMSSPI2CFrequency;
+
+/** All supported SPI bus frequencies. The computing formula is Baud_Rate = Fosc / (Fclk * 4) - 1. */
+typedef enum : unsigned char
+{
+	MSSP_SPI_FREQUENCY_50KHZ = 239, // For a 48MHz Fosc
+	MSSP_SPI_FREQUENCY_100KHZ = 119, // For a 48MHz Fosc
+	MSSP_SPI_FREQUENCY_500KHZ = 23, // For a 48MHz Fosc
+	MSSP_SPI_FREQUENCY_1MHZ = 11, // For a 48MHz Fosc
+	MSSP_SPI_FREQUENCY_2MHZ = 5, // For a 48MHz Fosc
+} TMSSPSPIFrequency;
+
+/** All supported SPI polarity and phase modes. */
+typedef enum
+{
+	MSSP_SPI_MODE_0,
+	MSSP_SPI_MODE_1,
+	MSSP_SPI_MODE_2,
+	MSSP_SPI_MODE_3
+} TMSSPSPIMode;
 
 //-------------------------------------------------------------------------------------------------
 // Functions
@@ -63,5 +83,27 @@ unsigned char MSSPI2CReadByte(unsigned char Is_Reception_Acknowledged);
  * @return 1 if the slave device did not acknowledge.
  */
 unsigned char MSSPI2CWriteByte(unsigned char Byte);
+
+/** Set the SPI bus frequency.
+ * @param Frequency The frequency to set.
+ */
+void MSSPSPISetFrequency(TMSSPSPIFrequency Frequency);
+
+/** Configure the polarity and phase mode to use.
+ * @param Mode The mode to apply.
+ */
+void MSSPSPISetMode(TMSSPSPIMode Mode);
+
+/** Assert or deassert the /CS line.
+ * @param Is_Asserted Set to 1 to select the slave device, set to 0 to release the slave device.
+ */
+void MSSPSPISelectSlave(unsigned char Is_Asserted);
+
+/** Send a byte to the slave device and fetch the byte received from the slave at the same time.
+ * @param Byte The data to send to the slave.
+ * @return The data read from the slave.
+ * @note This function purposely does not control the /CS signal, to give more flexibility to create multi transfers.
+ */
+unsigned char MSSPSPITransmitByte(unsigned char Byte);
 
 #endif
