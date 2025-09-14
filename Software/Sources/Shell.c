@@ -255,3 +255,104 @@ Exit:
 	LOG(SHELL_IS_LOGGING_ENABLED, "Return value : %u.", Return_Value);
 	return Return_Value;
 }
+
+void ShellDisplayDataDump(unsigned long Starting_Address, unsigned char *Pointer_Data, unsigned char Data_Bytes_Count)
+{
+	#define MAXIMUM_DATA_BYTES_PER_LINE 16
+
+	unsigned char Chunk_Size, i, j, *Pointer_Data_Beginning, Data;
+	char String_Line[81], *Pointer_String, Character; // Use the same line format as `hexdump -C`, which is 78 characters long, append the CRLF sequence, then add space for the terminating zero
+
+	while (Data_Bytes_Count > 0)
+	{
+		// Determine the maximum amount of data to display on the line
+		if (Data_Bytes_Count >= MAXIMUM_DATA_BYTES_PER_LINE) Chunk_Size = MAXIMUM_DATA_BYTES_PER_LINE;
+		else Chunk_Size = Data_Bytes_Count;
+
+		// Put the address at the beginning of the string
+		Pointer_String = String_Line;
+		sprintf(Pointer_String, "%08lX  ", Starting_Address);
+		Pointer_String += 10;
+
+		// Append the dumped data
+		Pointer_Data_Beginning = Pointer_Data;
+		for (i = 0; i < Chunk_Size; i++)
+		{
+			// Dump one byte at a time
+			sprintf(Pointer_String, "%02X ", *Pointer_Data);
+			Pointer_String += 3;
+			Pointer_Data++;
+
+			// Add an extra separating space after displaying 8 bytes to make the reading easier
+			if (i == 7)
+			{
+				*Pointer_String = ' ';
+				Pointer_String++;
+			}
+		}
+
+		// Fill the space remaining between the hexadecimal dump and the ASCII dump (if any)
+		for (; i < MAXIMUM_DATA_BYTES_PER_LINE; i++)
+		{
+			// Each hexadecimal dump is made of 2 characters followed by a space
+			for (j = 0; j < 3; j++)
+			{
+				*Pointer_String = ' ';
+				Pointer_String++;
+			}
+
+			// Take also into account the extra space separating the dumped hexadecimal values into two groups of 8 data
+			if (i == 7)
+			{
+				*Pointer_String = ' ';
+				Pointer_String++;
+			}
+		}
+
+		// Append the characters that start the ASCII dump section
+		*Pointer_String = ' ';
+		Pointer_String++;
+		*Pointer_String = '|';
+		Pointer_String++;
+
+		// Dump the same characters in ASCII mode
+		Pointer_Data = Pointer_Data_Beginning;
+		for (i = 0; i < Chunk_Size; i++)
+		{
+			// Cache the data value
+			Data = *Pointer_Data;
+			Pointer_Data++;
+
+			// Make sure only printable characters are shown
+			if ((Data >= ' ') && (Data <= '~')) Character = Data;
+			else Character = '.';
+
+			// Append the character
+			*Pointer_String = Character;
+			Pointer_String++;
+		}
+
+		// Fill the space remaining until the end of the ASCII dump area (if any)
+		for (; i < MAXIMUM_DATA_BYTES_PER_LINE; i++)
+		{
+			*Pointer_String = ' ';
+			Pointer_String++;
+		}
+
+		// Terminate the ASCII dump section and the string
+		*Pointer_String = '|';
+		Pointer_String++;
+		*Pointer_String = '\r';
+		Pointer_String++;
+		*Pointer_String = '\n';
+		Pointer_String++;
+		*Pointer_String = 0;
+
+		// Display the result
+		USBCommunicationsWriteString(String_Line);
+
+		// Update the pointers for the next iteration
+		Starting_Address += Chunk_Size;
+		Data_Bytes_Count -= Chunk_Size;
+	}
+}

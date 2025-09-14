@@ -52,4 +52,11 @@ unsigned char ShellCompareTokenWithString(char *Pointer_String_Token, char *Poin
  */
 unsigned char ShellConvertNumericalArgumentToBinary(char *Pointer_String, unsigned char Length, unsigned long *Pointer_Binary);
 
+/** Display a hexadecimal dump of the data followed by an ASCII dump.
+ * @param Starting_Address The address value to display at the beginning of the dump.
+ * @param Pointer_Data The data bytes to display.
+ * @param Data_Bytes_Count How many data bytes to process.
+ */
+void ShellDisplayDataDump(unsigned long Starting_Address, unsigned char *Pointer_Data, unsigned char Data_Bytes_Count);
+
 #endif
