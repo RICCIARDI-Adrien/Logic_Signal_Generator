@@ -24,7 +24,7 @@
 #define USB_CORE_DEVICE_REQUEST_TYPE_VALUE_RECIPIENT_OTHER 3
 
 /** A LED telling the user when there is activity on the USB bus. */
-#define USB_CORE_ACTIVITY_LED LATBbits.LATB2
+#define USB_CORE_ACTIVITY_LED LATCbits.LATC1
 
 //-------------------------------------------------------------------------------------------------
 // Private types
@@ -214,9 +214,8 @@ void USBCoreInitialize(const TUSBCoreDescriptorDevice *Pointer_Device_Descriptor
 	TUSBCoreHardwareEndpointConfiguration *Pointer_Endpoint_Hardware_Configuration;
 
 	// Display the USB bus activity using a LED
-	ANSELBbits.ANSB2 = 0;
-	USB_CORE_ACTIVITY_LED = 0; // Start with the LED turned off
-	TRISBbits.TRISB2 = 0;
+	USB_CORE_ACTIVITY_LED = 0; // Start with the LED turned off (no analog input on RC1)
+	TRISCbits.TRISC1 = 0;
 
 	// Configure the timer 0 to turn off the LED after a while of inactivity
 	T0CON = 0x03; // Do not enable the timer yet, configure it in 16-bit mode, use Fosc/4 as the clock, enable a 1:16 prescaler to make the timer overflow after about Fosc / 4 / 16-bit timer / prescaler = 48000000 / 4 / 65536 / 16 = 5,72Hz => 87,38ms
