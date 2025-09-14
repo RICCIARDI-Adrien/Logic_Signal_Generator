@@ -53,7 +53,7 @@ void ShellReadCommandLine(char *Pointer_String_Command_Line, unsigned char Maxim
 				break;
 
 			// Discard any VT100 escape sequence, otherwise pressing some keyboard keys can mess the whole displaying
-			case 0x1B:
+			case 0x1B: // This is redundant with the check in the switch's default, but keeping the escape here allow for a clearer comment
 				break;
 
 			case '\b':
@@ -75,6 +75,9 @@ void ShellReadCommandLine(char *Pointer_String_Command_Line, unsigned char Maxim
 
 			// Append the character to the string
 			default:
+				// Discard any control code not specifically handled before
+				if (Character < ' ') break;
+
 				// Discard the character if the maximum command line size is reached
 				if (Length < Maximum_Length)
 				{
