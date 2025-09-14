@@ -9,7 +9,7 @@
 // Constants
 //-------------------------------------------------------------------------------------------------
 /** How many commands are listed in the Shell_Commands array. */
-#define SHELL_COMMANDS_COUNT 4 // The sizeof() operator can't be used on the array as the array is declared in a separate C file
+#define SHELL_COMMANDS_COUNT 5 // The sizeof() operator can't be used on the array as the array is declared in a separate C file
 
 //-------------------------------------------------------------------------------------------------
 // Types
@@ -55,5 +55,10 @@ void ShellCommandI2CConfigureCallback(char *Pointer_String_Arguments);
  * @param Pointer_String_Arguments The command line arguments.
  */
 void ShellCommandI2CScanCallback(char *Pointer_String_Arguments);
+
+/** Implement the "pinout" shell command.
+ * @param Pointer_String_Arguments The command line arguments.
+ */
+void ShellCommandPinoutCallback(char *Pointer_String_Arguments);
 
 #endif

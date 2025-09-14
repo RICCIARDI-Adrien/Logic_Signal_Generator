@@ -32,5 +32,11 @@ const TShellCommand Shell_Commands[SHELL_COMMANDS_COUNT] =
 		.Pointer_String_Command = "i2c-scan",
 		.Pointer_String_Description = "scan the I2C bus from address 1 to 127.",
 		.Command_Callback = ShellCommandI2CScanCallback
+	},
+	// Pinout
+	{
+		.Pointer_String_Command = "pinout",
+		.Pointer_String_Description = "show the pins wiring corresponding to each supported protocol.",
+		.Command_Callback = ShellCommandPinoutCallback
 	}
 };
