@@ -46,7 +46,12 @@ void ShellCommandI2CCallback(char *Pointer_String_Arguments)
 	TI2CCommand Commands[MAXIMUM_COMMANDS_COUNT], *Pointer_Command = Commands;
 	unsigned char Commands_Count = 0, Length = 0, i, Is_Start_Generated = 0;
 	unsigned long Value;
-	char String_Temporary[32];
+	// Both buffers are never used at the same time, so make sure to reuse the same memory area
+	union
+	{
+		char String_Temporary[32];
+		unsigned char Buffer_Temporary[32];
+	} Buffers;
 
 	// Parse all commands to validate the command line syntax
 	while (*Pointer_String_Arguments != 0)
@@ -166,29 +171,41 @@ void ShellCommandI2CCallback(char *Pointer_String_Arguments)
 
 			case I2C_COMMAND_TYPE_READ:
 			{
-				unsigned char Is_Acknowledge_Generated, Data;
-				unsigned long Read_Bytes_Count = Pointer_Command->Bytes_Count, Read_Number;
-				char Character;
+				unsigned char Is_Acknowledge_Generated, *Pointer_Data_Buffer, Chunk_Size;
+				unsigned long Remaining_Bytes_Count = Pointer_Command->Bytes_Count, Address = 0;
 
-				// Read all bytes one at a time
-				snprintf(String_Temporary, sizeof(String_Temporary), "\r\nReading %lu bytes.", Read_Bytes_Count);
-				USBCommunicationsWriteString(String_Temporary);
-				LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Reading %lu bytes.", Read_Bytes_Count);
-				for (Read_Number = 0; Read_Number < Read_Bytes_Count; Read_Number++)
+				// Read all bytes one chunk at a time
+				snprintf(Buffers.String_Temporary, sizeof(Buffers.String_Temporary), "\r\nReading %lu bytes.\r\n", Remaining_Bytes_Count);
+				USBCommunicationsWriteString(Buffers.String_Temporary);
+				LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Reading %lu bytes.", Remaining_Bytes_Count);
+
+				while (Remaining_Bytes_Count > 0)
 				{
-					// Send a NACK if this is the last read command
-					if (Read_Number == Read_Bytes_Count - 1) Is_Acknowledge_Generated = 0;
-					else Is_Acknowledge_Generated = 1;
+					// Find the next chunk size
+					if (Remaining_Bytes_Count >= sizeof(Buffers.Buffer_Temporary)) Chunk_Size = sizeof(Buffers.Buffer_Temporary);
+					else Chunk_Size = (unsigned char) Remaining_Bytes_Count;
 
-					// Read the byte
-					LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Reading the byte %lu and sending %s to the slave device.", Read_Number, Is_Acknowledge_Generated ? "ACK" : "NACK");
-					Data = MSSPI2CReadByte(Is_Acknowledge_Generated);
+					// Read the chunk of data
+					Pointer_Data_Buffer = Buffers.Buffer_Temporary;
+					while (Chunk_Size > 0)
+					{
+						// Send a NACK if this is the last byte to read
+						if (Remaining_Bytes_Count == 1) Is_Acknowledge_Generated = 0;
+						else Is_Acknowledge_Generated = 1;
 
-					// Format the output
-					if ((Data >= ' ') && (Data <= '~')) Character = Data; // Make sure only printable characters are shown
-					else Character = '.';
-					snprintf(String_Temporary, sizeof(String_Temporary), "\r\n0x%08lX: 0x%02X (%u)\t'%c'.", Read_Number, Data, Data, Character);
-					USBCommunicationsWriteString(String_Temporary);
+						// Read the byte
+						LOG(SHELL_I2C_IS_LOGGING_ENABLED, "Reading the next byte and sending %s to the slave device.", Is_Acknowledge_Generated ? "ACK" : "NACK");
+						*Pointer_Data_Buffer = MSSPI2CReadByte(Is_Acknowledge_Generated);
+
+						// Prepare for the next chunk
+						Chunk_Size--;
+						Remaining_Bytes_Count--;
+						Pointer_Data_Buffer++;
+					}
+
+					// Display the data
+					ShellDisplayDataDump(Address, Buffers.Buffer_Temporary, sizeof(Buffers.Buffer_Temporary));
+					Address += sizeof(Buffers.Buffer_Temporary);
 				}
 
 				break;
@@ -202,8 +219,8 @@ void ShellCommandI2CCallback(char *Pointer_String_Arguments)
 				Is_Not_Acknowledge_Received = MSSPI2CWriteByte(Pointer_Command->Data);
 				if (Is_Not_Acknowledge_Received)
 				{
-					snprintf(String_Temporary, sizeof(String_Temporary), "\r\nGot NACK to the write 0x%02X.", Pointer_Command->Data);
-					USBCommunicationsWriteString(String_Temporary);
+					snprintf(Buffers.String_Temporary, sizeof(Buffers.String_Temporary), "\r\nGot NACK to the write 0x%02X.", Pointer_Command->Data);
+					USBCommunicationsWriteString(Buffers.String_Temporary);
 				}
 
 				break;
