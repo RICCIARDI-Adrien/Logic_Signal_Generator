@@ -14,6 +14,7 @@ SOURCES = \
 	$(PATH_SOURCES)/Shell_Command_Help.c \
 	$(PATH_SOURCES)/Shell_Command_I2C.c \
 	$(PATH_SOURCES)/Shell_Command_Pinout.c \
+	$(PATH_SOURCES)/Shell_Command_SPI.c \
 	$(PATH_SOURCES)/Shell_Commands.c \
 	$(PATH_SOURCES)/UART.c \
 	$(PATH_SOURCES)/USB_Communications.c \
