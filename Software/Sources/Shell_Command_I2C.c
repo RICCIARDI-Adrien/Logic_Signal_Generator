@@ -171,7 +171,7 @@ void ShellCommandI2CCallback(char *Pointer_String_Arguments)
 
 			case I2C_COMMAND_TYPE_READ:
 			{
-				unsigned char Is_Acknowledge_Generated, *Pointer_Data_Buffer, Chunk_Size;
+				unsigned char Is_Acknowledge_Generated, *Pointer_Data_Buffer, Chunk_Size, Bytes_To_Display_Count;
 				unsigned long Remaining_Bytes_Count = Pointer_Command->Bytes_Count, Address = 0;
 
 				// Read all bytes one chunk at a time
@@ -184,6 +184,7 @@ void ShellCommandI2CCallback(char *Pointer_String_Arguments)
 					// Find the next chunk size
 					if (Remaining_Bytes_Count >= sizeof(Buffers.Buffer_Temporary)) Chunk_Size = sizeof(Buffers.Buffer_Temporary);
 					else Chunk_Size = (unsigned char) Remaining_Bytes_Count;
+					Bytes_To_Display_Count = Chunk_Size;
 
 					// Read the chunk of data
 					Pointer_Data_Buffer = Buffers.Buffer_Temporary;
@@ -204,7 +205,7 @@ void ShellCommandI2CCallback(char *Pointer_String_Arguments)
 					}
 
 					// Display the data
-					ShellDisplayDataDump(Address, Buffers.Buffer_Temporary, sizeof(Buffers.Buffer_Temporary));
+					ShellDisplayDataDump(Address, Buffers.Buffer_Temporary, Bytes_To_Display_Count);
 					Address += sizeof(Buffers.Buffer_Temporary);
 				}
 
