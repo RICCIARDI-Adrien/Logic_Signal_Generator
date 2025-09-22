@@ -39,6 +39,12 @@ const TShellCommand Shell_Commands[SHELL_COMMANDS_COUNT] =
 		.Pointer_String_Description = "show the pins wiring corresponding to each supported protocol.",
 		.Command_Callback = ShellCommandPinoutCallback
 	},
+	// SPI
+	{
+		.Pointer_String_Command = "spi",
+		.Pointer_String_Description = "send an SPI transaction on the bus. Use \"[\" to select the slave device, \"]\" to deselect it, \"t[h]XXXX\" to transfer XXXX bytes while sending the byte 0xFF, then \"XX\" or \"hXX\" to transfer a decimal or a hexadecimal single byte of data.",
+		.Command_Callback = ShellCommandSPICallback
+	},
 	// SPI configure
 	{
 		.Pointer_String_Command = "spi-configure",
