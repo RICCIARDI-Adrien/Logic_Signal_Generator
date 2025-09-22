@@ -10,7 +10,7 @@
 // Private constants
 //-------------------------------------------------------------------------------------------------
 /** Set to 1 to enable the log messages, set to 0 to disable them. */
-#define USB_CORE_IS_LOGGING_ENABLED 1
+#define USB_CORE_IS_LOGGING_ENABLED 0
 
 #define USB_CORE_DEVICE_REQUEST_TYPE_MASK_TYPE 0x60
 #define USB_CORE_DEVICE_REQUEST_TYPE_VALUE_TYPE_STANDARD (0 << 5)

@@ -9,7 +9,7 @@
 // Private constants
 //-------------------------------------------------------------------------------------------------
 /** Set to 1 to enable the log messages, set to 0 to disable them. */
-#define USB_COMMUNICATIONS_IS_LOGGING_ENABLED 1
+#define USB_COMMUNICATIONS_IS_LOGGING_ENABLED 0
 
 /** The size in bytes of the reception circular buffer. */
 #define USB_COMMUNICATIONS_DATA_RECEPTION_BUFFER_SIZE USB_CORE_ENDPOINT_PACKETS_SIZE
