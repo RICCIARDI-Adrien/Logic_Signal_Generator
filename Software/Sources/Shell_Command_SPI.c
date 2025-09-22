@@ -43,8 +43,14 @@ void ShellCommandSPICallback(char *Pointer_String_Arguments)
 	} TSPICommand;
 
 	TSPICommand Commands[MAXIMUM_COMMANDS_COUNT], *Pointer_Command = Commands;
-	unsigned char Commands_Count = 0, Length = 0;
+	unsigned char Commands_Count = 0, Length = 0, i;
 	unsigned long Value;
+	// Both buffers are never used at the same time, so make sure to reuse the same memory area
+	union
+	{
+		char String_Temporary[32];
+		unsigned char Buffer_Temporary[32];
+	} Buffers;
 
 	// Parse all commands to validate the command line syntax
 	while (*Pointer_String_Arguments != 0)
@@ -131,7 +137,83 @@ void ShellCommandSPICallback(char *Pointer_String_Arguments)
 	}
 	LOG(SHELL_SPI_IS_LOGGING_ENABLED, "Parsed %u commands, now executing them.", Commands_Count);
 
-	// TODO
+	// Configure the SPI interface
+	MSSPSetFunctioningMode(MSSP_FUNCTIONING_MODE_SPI);
+
+	// Execute the commands
+	Pointer_Command = Commands;
+	for (i = 0; i < Commands_Count; i++)
+	{
+		LOG(SHELL_SPI_IS_LOGGING_ENABLED, "Executing command %u.", i);
+		switch (Pointer_Command->Type)
+		{
+			case SPI_COMMAND_TYPE_SELECT_SLAVE:
+				LOG(SHELL_SPI_IS_LOGGING_ENABLED, "Selecting the slave device.");
+				MSSPSPISelectSlave(1);
+				break;
+
+			case SPI_COMMAND_TYPE_DESELECT_SLAVE:
+				LOG(SHELL_SPI_IS_LOGGING_ENABLED, "Deselecting the slave device.");
+				MSSPSPISelectSlave(0);
+				break;
+
+			case SPI_COMMAND_TYPE_SINGLE_BYTE_TRANSFER:
+			{
+				unsigned char Read_Byte;
+
+				// Perform the transfer
+				LOG(SHELL_SPI_IS_LOGGING_ENABLED, "Writing the byte 0x%02X.", Pointer_Command->Data);
+				Read_Byte = MSSPSPITransmitByte(Pointer_Command->Data);
+
+				// Display the transferred data
+				sprintf(Buffers.String_Temporary, "\r\nSent : 0x%02X, received : 0x%02X.", Pointer_Command->Data, Read_Byte);
+				USBCommunicationsWriteString(Buffers.String_Temporary);
+				break;
+			}
+
+			case SPI_COMMAND_TYPE_MULTIPLE_BYTES_TRANSFER:
+			{
+				unsigned char *Pointer_Data_Buffer, Chunk_Size, Bytes_To_Display_Count;
+				unsigned long Remaining_Bytes_Count = Pointer_Command->Bytes_Count, Address = 0;
+
+				// Read all bytes one chunk at a time
+				snprintf(Buffers.String_Temporary, sizeof(Buffers.String_Temporary), "\r\nTransferring %lu bytes.\r\n", Remaining_Bytes_Count);
+				USBCommunicationsWriteString(Buffers.String_Temporary);
+				LOG(SHELL_SPI_IS_LOGGING_ENABLED, "Transferring %lu bytes.", Remaining_Bytes_Count);
+
+				while (Remaining_Bytes_Count > 0)
+				{
+					// Find the next chunk size
+					if (Remaining_Bytes_Count >= sizeof(Buffers.Buffer_Temporary)) Chunk_Size = sizeof(Buffers.Buffer_Temporary);
+					else Chunk_Size = (unsigned char) Remaining_Bytes_Count;
+					Bytes_To_Display_Count = Chunk_Size;
+
+					// Read the chunk of data
+					Pointer_Data_Buffer = Buffers.Buffer_Temporary;
+					while (Chunk_Size > 0)
+					{
+						// Read the byte
+						LOG(SHELL_SPI_IS_LOGGING_ENABLED, "Reading the next byte while sending 0xFF to the slave device.");
+						*Pointer_Data_Buffer = MSSPSPITransmitByte(0xFF);
+
+						// Prepare for the next chunk
+						Chunk_Size--;
+						Remaining_Bytes_Count--;
+						Pointer_Data_Buffer++;
+					}
+
+					// Display the data
+					ShellDisplayDataDump(Address, Buffers.Buffer_Temporary, Bytes_To_Display_Count);
+					Address += sizeof(Buffers.Buffer_Temporary);
+				}
+
+				break;
+			}
+		}
+
+		// Go to the next command
+		Pointer_Command++;
+	}
 }
 
 void ShellCommandSPIConfigureCallback(char *Pointer_String_Arguments)
