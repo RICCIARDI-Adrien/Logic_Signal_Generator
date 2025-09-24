@@ -263,6 +263,10 @@ void main(void)
 	RCONbits.IPEN = 1; // Enable priority levels on interrupts
 	INTCON |= 0xC0; // Enable high and low priority interrupts
 
+	// Light the "power" LED
+	LATCbits.LATC0 = 1;
+	TRISCbits.TRISC0 = 0; // Set the pin as output (there is no analog on this pin)
+
 	LOG(1, "\033[33mInitialization complete.\033[0m");
 
 	// Initialize the USB stack now that all modules are operational
@@ -273,27 +277,11 @@ void main(void)
 	while (!USBCommunicationsIsCommunicationEstablished());
 	__delay_ms(100); // Give a bit of delay to finalize the USB CDC ACM configuration
 
+	// Process the user commands
 	while (1)
 	{
 		ShellReadCommandLine(String_Command_Line, sizeof(String_Command_Line));
 		Result = ShellProcessCommand(String_Command_Line);
 		if (Result == 1) USBCommunicationsWriteString("\r\nUnknown command.");
-	}
-
-	// TEST
-	ANSELBbits.ANSB2 = 0;
-	LATBbits.LATB2 = 0;
-	TRISBbits.TRISB2 = 0;
-	while (1)
-	{
-		UARTWriteByte('C');
-		UARTWriteByte('I');
-		UARTWriteByte('A');
-		UARTWriteByte('O');
-		UARTWriteByte('\r');
-		UARTWriteByte('\n');
-
-		LATBbits.LATB2 = !LATBbits.LATB2;
-		__delay_ms(1000);
 	}
 }
