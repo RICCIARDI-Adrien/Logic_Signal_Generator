@@ -15,3 +15,12 @@ A versatile multi-protocol 1.8V/3.3V/5V logic signal generator powered by a PIC1
 * PICkit-compatible standard connector to easily program the on-board microcontroller firmware.
 * Compact and robust casing designed to bring the signal generator on field.
 
+## Hardware
+
+Bare PCB :
+![Bare PCB front view](Resources/Bare_PCB_Top.jpg)
+![Bare PCB bottom view](Resources/Bare_PCB_Bottom.jpg)
+
+Assembled PCB :
+![Assembled PCB front view](Resources/Assembled_PCB_Top.jpg)
+![Assembled PCB bottom view](Resources/Assembled_PCB_Bottom.jpg)
