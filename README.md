@@ -2,6 +2,8 @@
 
 A versatile multi-protocol 1.8V/3.3V/5V logic signal generator powered by a PIC18F25K50.
 
+![Fully assembled device corner](Resources/Fully_Assembled_Device_Corner.jpg)
+
 ## Features
 
 * 8 independant channels featuring several standard protocols.
@@ -24,3 +26,23 @@ Bare PCB :
 Assembled PCB :
 ![Assembled PCB front view](Resources/Assembled_PCB_Top.jpg)
 ![Assembled PCB bottom view](Resources/Assembled_PCB_Bottom.jpg)
+
+## Casing
+
+The casing is made of 4mm-thick 304 stainless steel.
+
+Bare plates :
+![Bare plates](Resources/Bare_Casing_Plates.jpg)
+
+Assembled bottom plate, with PCB and hex spacers :
+![Assembled bottom plate](Resources/Assembled_Casing_Bottom.jpg)
+
+Fully assembled device :  
+Top view :
+![Fully assembled device](Resources/Fully_Assembled_Device_Top.jpg)
+IO and power connectors :
+![Fully assembled device side IO connector](Resources/Fully_Assembled_Device_Side_IO_Connector.jpg)
+USB connector and IO voltage selection switch :
+![Fully assembled device side USB connector](Resources/Fully_Assembled_Device_Side_USB_Connector.jpg)
+Power and activity LEDs along with microcontroller programming connector :
+![Fully assembled device side LEDs](Resources/Fully_Assembled_Device_Side_LEDs.jpg)
