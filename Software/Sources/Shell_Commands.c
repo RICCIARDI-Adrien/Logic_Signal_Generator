@@ -50,5 +50,11 @@ const TShellCommand Shell_Commands[SHELL_COMMANDS_COUNT] =
 		.Pointer_String_Command = "spi-configure",
 		.Pointer_String_Description = "set the SPI interface settings. Usage : \"spi-configure 50khz|100khz|500khz|1mhz|2mhz mode0|mode1|mode2|mode3\".",
 		.Command_Callback = ShellCommandSPIConfigureCallback
+	},
+	// Version
+	{
+		.Pointer_String_Command = "version",
+		.Pointer_String_Description = "display the firmware version and build information.",
+		.Command_Callback = ShellCommandVersionCallback
 	}
 };
