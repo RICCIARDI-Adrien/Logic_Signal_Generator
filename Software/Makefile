@@ -1,5 +1,6 @@
 PATH_BINARIES = $(shell realpath .)/Binaries
 PATH_INCLUDES = $(shell realpath .)/Includes
+PATH_MICROCHIP_SDK ?= "/opt/microchip"
 PATH_OBJECTS = $(shell realpath .)/Objects
 PATH_SOURCES = $(shell realpath .)/Sources
 
@@ -24,7 +25,7 @@ SOURCES = \
 
 CC = xc8-cc
 # The -Wa,-a argument tells the assembler to generate a listing file
-CFLAGS = -mcpu=18F25K50 -Xparser -W -Xparser -Wall -D_XTAL_FREQ=48000000 -DMAKEFILE_FIRMWARE_VERSION=\\\"$(FIRMWARE_VERSION)\\\" -Wa,-a -Wl,-Map=Logic_Signal_Generator.map -O2
+CFLAGS = -mcpu=18F25K50 -mdfp="$(PATH_MICROCHIP_SDK)/Microchip.PIC18F-K_DFP/xc8" -Xparser -W -Xparser -Wall -D_XTAL_FREQ=48000000 -DMAKEFILE_FIRMWARE_VERSION=\\\"$(FIRMWARE_VERSION)\\\" -Wa,-a -Wl,-Map=Logic_Signal_Generator.map -O2
 
 all: $(PATH_BINARIES) $(PATH_OBJECTS)
 	cd $(PATH_OBJECTS) && $(CC) $(CFLAGS) -I$(PATH_INCLUDES) $(SOURCES) -o $(BINARY_NAME)
@@ -44,7 +45,7 @@ $(PATH_OBJECTS):
 clean:
 	rm -rf $(PATH_BINARIES) $(PATH_OBJECTS)
 
-FLASH_TOOL_PATH=$(shell find /opt/microchip/mplabx -iname ipecmd.jar)
+FLASH_TOOL_PATH=$(shell find $(PATH_MICROCHIP_SDK)/mplabx -iname ipecmd.jar)
 flash:
 	@# -TPPK3 selects the PICkit 3 programmer
 	@# -OL allows to release the reset signal
