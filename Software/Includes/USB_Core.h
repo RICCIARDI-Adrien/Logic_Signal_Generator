@@ -16,6 +16,33 @@
 /** How many hardware endpoints to map into memory. */
 #define USB_CORE_HARDWARE_ENDPOINTS_COUNT 4
 
+/** The "Data transfer direction" subfield of the "bmRequestType" field of an USB Device Request. */
+#define USB_CORE_DEVICE_REQUEST_TYPE_MASK_DATA_TRANSFER_DIRECTION 0x80
+/** The "Data transfer direction" subfield is set to Host-to-device. */
+#define USB_CORE_DEVICE_REQUEST_TYPE_VALUE_DATA_TRANSFER_DIRECTION_HOST_TO_DEVICE (0 << 7)
+/** The "Data transfer direction" subfield is set to Device-to-host. */
+#define USB_CORE_DEVICE_REQUEST_TYPE_VALUE_DATA_TRANSFER_DIRECTION_DEVICE_TO_HOST (1 << 7)
+
+/** The "Type" subfield of the "bmRequestType" field of an USB Device Request. */
+#define USB_CORE_DEVICE_REQUEST_TYPE_MASK_TYPE 0x60
+/** The "Type" subfield is set to Standard. */
+#define USB_CORE_DEVICE_REQUEST_TYPE_VALUE_TYPE_STANDARD (0 << 5)
+/** The "Type" subfield is set to Class. */
+#define USB_CORE_DEVICE_REQUEST_TYPE_VALUE_TYPE_CLASS (1 << 5)
+/** The "Type" subfield is set to Vendor. */
+#define USB_CORE_DEVICE_REQUEST_TYPE_VALUE_TYPE_VENDOR (2 << 5)
+
+/** The "Recipient" subfield of the "bmRequestType" field of an USB Device Request. */
+#define USB_CORE_DEVICE_REQUEST_TYPE_MASK_RECIPIENT 0x1F
+/** The "Recipient" subfield is set to Device. */
+#define USB_CORE_DEVICE_REQUEST_TYPE_VALUE_RECIPIENT_DEVICE 0
+/** The "Recipient" subfield is set to Interface. */
+#define USB_CORE_DEVICE_REQUEST_TYPE_VALUE_RECIPIENT_INTERFACE 1
+/** The "Recipient" subfield is set to Endpoint. */
+#define USB_CORE_DEVICE_REQUEST_TYPE_VALUE_RECIPIENT_ENDPOINT 2
+/** The "Recipient" subfield is set to Other. */
+#define USB_CORE_DEVICE_REQUEST_TYPE_VALUE_RECIPIENT_OTHER 3
+
 /** Tell whether the USB peripheral interrupt needs to be serviced. */
 #define USB_CORE_IS_INTERRUPT_FIRED() PIR3bits.USBIF // No need to check the interrupt enabled bit because the interrupt is always enabled
 

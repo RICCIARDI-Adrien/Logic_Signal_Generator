@@ -21,10 +21,11 @@
 typedef enum : unsigned char
 {
 	USB_COMMUNICATIONS_PSTN_REQUEST_CODE_SET_LINE_CODING = 0x20,
+	USB_COMMUNICATIONS_PSTN_REQUEST_CODE_GET_LINE_CODING = 0x21,
 	USB_COMMUNICATIONS_PSTN_REQUEST_CODE_SET_CONTROL_LINE_STATE = 0x22
 } TUSBCommunicationsPSTNRequestCode;
 
-/** The PSTN Get/Set Line Coding request payload. */
+/** The PSTN Get/Set Line Coding request payload, see PSTN revision 1.20 table 17. */
 typedef struct
 {
 	unsigned long dwDTERate;
@@ -59,6 +60,15 @@ static volatile unsigned char USB_Communications_Is_Transmission_Finished = 1; /
 /** Tell wether the CDC ACM link is configured by the host and operational. */
 static unsigned char USB_Communications_Is_Connection_Established = 0;
 
+/** Cache the currently assigned line configuration. */
+static TUSBCommunicationsPSTNRequestGetLineCodingPayload USB_Communications_Current_Line_Coding =
+{
+	.dwDTERate = 9600, // 9600 bits/s
+	.bCharFormat = 0, // 1 stop bit
+	.bParityType = 0, // No parity
+	.bDataBits = 8 // 8 data bits
+};
+
 //-------------------------------------------------------------------------------------------------
 // Public functions
 //-------------------------------------------------------------------------------------------------
@@ -71,41 +81,73 @@ void USBCommunicationsHandleControlRequestCallback(TUSBCoreHardwareEndpointOutTr
 	} TState;
 	static TState Current_State = STATE_RECEIVE_REQUEST;
 	static TUSBCommunicationsPSTNRequestCode Last_Request_Code;
+	// Send an empty packet by default, this is the most common case
+	void *Pointer_IN_Data = NULL;
+	unsigned char IN_Data_Size = 0;
 
 	LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Entry, current state : %u.", Current_State);
 
 	// A simple state machine to deal with the request packet, that may be followed by a payload packet
 	if (Current_State == STATE_RECEIVE_REQUEST)
 	{
-		// Check wether a payload is expected
+		// Check wether this is a "get" or "set" request
 		TUSBCoreDeviceRequest *Pointer_Request = (TUSBCoreDeviceRequest *) Pointer_Transfer_Callback_Data->Pointer_OUT_Data_Buffer;
 		Last_Request_Code = (TUSBCommunicationsPSTNRequestCode) Pointer_Request->bRequest;
-		LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Received a request with the code 0x%02X.", Last_Request_Code);
+		LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Received a request with the code 0x%02X on endpoint %u.", Last_Request_Code, Pointer_Transfer_Callback_Data->Endpoint_ID);
 
-		// Prepare the state machine for the payload reception
-		if (Pointer_Request->wLength > 0)
+		// This is a host to device request
+		if ((Pointer_Request->bmRequestType & USB_CORE_DEVICE_REQUEST_TYPE_MASK_DATA_TRANSFER_DIRECTION) == USB_CORE_DEVICE_REQUEST_TYPE_VALUE_DATA_TRANSFER_DIRECTION_HOST_TO_DEVICE)
 		{
-			LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Expecting a payload of %u bytes.", Pointer_Request->wLength);
-			Current_State = STATE_RECEIVE_PAYLOAD;
+			LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "This is a \"set\" request (host to device).");
 
-			// The request (sent by the host) data synchronization is always 0, so wait for a 1 for the next packet containing the payload
-			// Do not acknowledge the packet reception with an empty IN packet because we are waiting for the payload OUT one
-			USBCorePrepareForOutTransfer(Pointer_Transfer_Callback_Data->Endpoint_ID, 1);
-			return;
+			// Prepare the state machine for the payload reception (if any payload is requested)
+			if (Pointer_Request->wLength > 0)
+			{
+				LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Expecting a payload of %u bytes.", Pointer_Request->wLength);
+				Current_State = STATE_RECEIVE_PAYLOAD;
+
+				// The request (sent by the host) data synchronization is always 0, so wait for a 1 for the next packet containing the payload
+				// Do not acknowledge the packet reception with an empty IN packet because we are waiting for the payload OUT one
+				USBCorePrepareForOutTransfer(Pointer_Transfer_Callback_Data->Endpoint_ID, 1);
+				return;
+			}
+			else
+			{
+				LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "No payload is expected, processing the request.");
+
+				// Process the request
+				switch (Last_Request_Code)
+				{
+					case USB_COMMUNICATIONS_PSTN_REQUEST_CODE_SET_CONTROL_LINE_STATE:
+						// This request is ignored
+						LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Processing the Set Control Line State PSTN request.");
+
+						// The Linux most common TTY programs (Picocom, Minicom etc) seem to send the Set Control Line State request at the end, when everything is ready
+						USB_Communications_Is_Connection_Established = 1;
+						break;
+
+					default:
+						LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Unsupported request 0x%02X.", Last_Request_Code);
+						break;
+				}
+			}
 		}
+		// This is a device to host request
 		else
 		{
-			LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "No payload is expected, processing the request.");
+			LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "This is a \"get\" request (device to host), requesting %u bytes of payload.", Pointer_Request->wLength);
 
 			// Process the request
 			switch (Last_Request_Code)
 			{
-				case USB_COMMUNICATIONS_PSTN_REQUEST_CODE_SET_CONTROL_LINE_STATE:
-					// This request is ignored
-					LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Processing the Set Control Line State PSTN request.");
-
-					// The Linux most common TTY programs (Picocom, Minicom etc) seem to send the Set Control Line State request at the end, when everything is ready
-					USB_Communications_Is_Connection_Established = 1;
+				case USB_COMMUNICATIONS_PSTN_REQUEST_CODE_GET_LINE_CODING:
+					LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Processing the Get Line Coding PSTN request.");
+					if (Pointer_Request->wLength == sizeof(USB_Communications_Current_Line_Coding))
+					{
+						Pointer_IN_Data = &USB_Communications_Current_Line_Coding;
+						IN_Data_Size = (unsigned char) sizeof(USB_Communications_Current_Line_Coding);
+					}
+					else LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Error : incorrect requested payload size.");
 					break;
 
 				default:
@@ -123,11 +165,14 @@ void USBCommunicationsHandleControlRequestCallback(TUSBCoreHardwareEndpointOutTr
 		switch (Last_Request_Code)
 		{
 			case USB_COMMUNICATIONS_PSTN_REQUEST_CODE_SET_LINE_CODING:
+			{
+				// Keep the last set parameters to be able to answer to the "get line coding" request
+				TUSBCommunicationsPSTNRequestGetLineCodingPayload *Pointer_Payload = (TUSBCommunicationsPSTNRequestGetLineCodingPayload *) Pointer_Transfer_Callback_Data->Pointer_OUT_Data_Buffer;
+				USB_CORE_MEMCPY(&USB_Communications_Current_Line_Coding, Pointer_Payload, sizeof(USB_Communications_Current_Line_Coding));
+
 				// This request is ignored, only display the payload content
 				LOG_BEGIN_SECTION(USB_COMMUNICATIONS_IS_LOGGING_ENABLED)
 				{
-					TUSBCommunicationsPSTNRequestGetLineCodingPayload *Pointer_Payload = (TUSBCommunicationsPSTNRequestGetLineCodingPayload *) Pointer_Transfer_Callback_Data->Pointer_OUT_Data_Buffer;
-
 					// Convert the parity to a string
 					const char *Pointer_String_Parity;
 					switch (Pointer_Payload->bParityType)
@@ -159,6 +204,7 @@ void USBCommunicationsHandleControlRequestCallback(TUSBCoreHardwareEndpointOutTr
 				LOG_END_SECTION()
 
 				break;
+			}
 
 			default:
 				LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Unsupported request 0x%02X.", Last_Request_Code);
@@ -170,7 +216,8 @@ void USBCommunicationsHandleControlRequestCallback(TUSBCoreHardwareEndpointOutTr
 	}
 
 	// Manage the USB connection
-	USBCorePrepareForInTransfer(Pointer_Transfer_Callback_Data->Endpoint_ID, NULL, 0, 1); // Send back an empty packet to acknowledge the command reception
+	LOG(USB_COMMUNICATIONS_IS_LOGGING_ENABLED, "Sending an IN packet of %u bytes.", IN_Data_Size);
+	USBCorePrepareForInTransfer(Pointer_Transfer_Callback_Data->Endpoint_ID, Pointer_IN_Data, IN_Data_Size, 1);
 	USBCorePrepareForOutTransfer(Pointer_Transfer_Callback_Data->Endpoint_ID, 0); // Re-enable packets reception
 }
 
