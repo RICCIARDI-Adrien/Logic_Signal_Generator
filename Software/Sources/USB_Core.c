@@ -527,10 +527,18 @@ void USBCoreInterruptHandler(void)
 									break;
 
 								case USB_CORE_DESCRIPTOR_TYPE_DEVICE:
+								{
+									unsigned char Size;
+
 									LOG(USB_CORE_IS_LOGGING_ENABLED, "Selecting the device descriptor.");
-									USBCorePrepareForInTransfer(0, (void *) Pointer_USB_Core_Device_Descriptor, USB_CORE_DESCRIPTOR_SIZE_DEVICE, 1);
+
+									// Make sure that the requested size is not too big, otherwise truncate it
+									if (Pointer_Device_Request->wLength > USB_CORE_DESCRIPTOR_SIZE_DEVICE) Size = USB_CORE_DESCRIPTOR_SIZE_DEVICE;
+									else Size = (unsigned char) Pointer_Device_Request->wLength;
+									USBCorePrepareForInTransfer(0, (void *) Pointer_USB_Core_Device_Descriptor, Size, 1);
 									USBCorePrepareForOutTransfer(0, 0); // Re-enable packets reception
 									break;
+								}
 
 								case USB_CORE_DESCRIPTOR_TYPE_DEVICE_QUALIFIER:
 									LOG(USB_CORE_IS_LOGGING_ENABLED, "Tell the host that the device qualifier descriptor is not supported.");
