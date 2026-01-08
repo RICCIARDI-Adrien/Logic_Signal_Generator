@@ -4,7 +4,7 @@ PATH_MICROCHIP_SDK ?= "/opt/microchip"
 PATH_OBJECTS = $(shell realpath .)/Objects
 PATH_SOURCES = $(shell realpath .)/Sources
 
-FIRMWARE_VERSION=1.0
+FIRMWARE_VERSION=1.1
 
 BINARY_NAME = Logic_Signal_Generator.hex
 SOURCES = \
