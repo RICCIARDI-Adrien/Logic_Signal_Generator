@@ -281,7 +281,12 @@ void main(void)
 	while (1)
 	{
 		ShellReadCommandLine(String_Command_Line, sizeof(String_Command_Line));
-		Result = ShellProcessCommand(String_Command_Line);
-		if (Result == 1) USBCommunicationsWriteString("\r\nUnknown command.");
+
+		// Execute the command only if one has been provided
+		if (String_Command_Line[0] != 0)
+		{
+			Result = ShellProcessCommand(String_Command_Line);
+			if (Result == 1) USBCommunicationsWriteString("\r\nUnknown command.");
+		}
 	}
 }
